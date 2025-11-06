@@ -34,7 +34,7 @@ class MainViewModel @Inject constructor(
                 val currentVersion = context.packageManager
                     .getPackageInfo(context.packageName, 0)
                     .versionName!!
-                if (latest != null && isNewerVersion(latest.version.removePrefix("v"), currentVersion)) {
+                if (latest != null && isNewerVersion(latest.version.removePrefix("v").removeSuffix("-debug"), currentVersion)) {
                     _state.update { it.copy(available = true, info = latest) }
                 }
             } catch (e: Exception) {

@@ -41,7 +41,7 @@ fun UpdateDialog(
     fun startDownload() {
         scope.launch {
             isDownloading = true
-            val fileName = "${context.packageName}-${info.version}.apk"
+            val fileName = info.downloadUrl.substringAfterLast("/")
 
             val downloadId = downloadApk(
                 context = context,
