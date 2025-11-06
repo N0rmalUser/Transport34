@@ -1,0 +1,38 @@
+<resources>
+    <string name="app_name">Transport 34</string>
+
+    <string name="schedule">Schedule</string>
+    <string name="map">Map</string>
+
+    <string name="save">save</string>
+    <string name="stop">station</string>
+    <string name="no_saved_stops">There are no saved stops</string>
+
+
+    <string name="error_no_internet">No internet connection</string>
+    <string name="error_generic">An error occurred</string>
+
+    <string name="dialog_error_title">Error</string>
+    <string name="dialog_retry">Retry</string>
+    <string name="dialog_close">Close</string>
+
+    <string name="loading_message">Loading...</string>
+    <string name="no_stops_saved">No saved stops</string>
+    <string name="stop_label">Stop %1$s</string>
+
+
+    <string name="route_arrival_time">Arrival: %1$s</string>
+    <string name="route_minutes_until">%1$d min</string>
+    <string name="route_arriving">Arriving</string>
+
+    <string name="no_available_routes">No available routes</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete_stop">Delete</string>
+    <string name="confirm_delete_title">Delete a stop?</string>
+    <string name="confirm_delete_message">Are you sure you want to delete this stop from your saved ones?</string>
+    <string name="delete">Delete</string>
+
+    <string name="update_available">Update is available</string>
+    <string name="download_update">Download update</string>
+    <string name="new_version">"New version: %1$s"</string>
+</resources>

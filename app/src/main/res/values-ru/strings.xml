@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Транспорт 34</string>
+    <string name="save">сохранить</string>
+    <string name="schedule">Расписание</string>
+    <string name="map">Карта</string>
+    <string name="stop">становка</string>
+    <string name="no_saved_stops">Нет сохранённых остановок</string>
+
+    <string name="error_no_internet">Нет интернет-соединения</string>
+    <string name="error_generic">Произошла ошибка</string>
+
+    <string name="dialog_error_title">Ошибка</string>
+    <string name="dialog_retry">Повторить</string>
+    <string name="dialog_close">Закрыть</string>
+
+    <string name="loading_message">Загрузка...</string>
+    <string name="no_stops_saved">Нет сохранённых остановок</string>
+    <string name="stop_label">Остановка %1$s</string>
+
+    <string name="route_arrival_time">Прибытие: %1$s</string>
+    <string name="route_minutes_until">%1$d мин</string>
+    <string name="route_arriving">Прибывает</string>
+    <string name="no_available_routes">Нет доступных маршрутов</string>
+    <string name="delete_stop">Удалить</string>
+    <string name="confirm_delete_title">Удалить остановку?</string>
+    <string name="confirm_delete_message">Вы уверены, что хотите удалить эту остановку из сохранённых?</string>
+    <string name="delete">Удалить</string>
+    <string name="cancel">Отмена</string>
+    <string name="update_available">Доступно обновление</string>
+    <string name="download_update">Скачать обновление</string>
+    <string name="new_version">Новая версия: %1$s</string>
+</resources>
