@@ -11,153 +11,122 @@ import jakarta.inject.Inject
 import org.json.JSONArray
 import org.json.JSONObject
 import java.security.MessageDigest
+import java.util.concurrent.atomic.AtomicInteger
 
 class TransportApi @Inject constructor(
     private val client: HttpClient
 ) {
-    private var counter = 1
-    private var sid: String? = null
-    private var guid: String? = null
-    private var magic: String? = null
-    private var method: String? = null
+    private val counter = AtomicInteger(1)
+    private var sessionId: String? = null
 
-    private suspend fun startSession() {
-        val body = JSONObject().apply {
-            put("jsonrpc", "2.0")
-            put("method", "startSession")
-            put("id", counter)
-        }
+    private companion object {
+        private const val BASE_URL = "https://transport.volganet.ru/api/rpc.php"
+        private const val TAG = "TransportApi"
+    }
 
-        val response = client.post("https://transport.volganet.ru/api/rpc.php") {
+    private suspend fun ensureSession() {
+        if (sessionId != null) return
+
+        val requestId = counter.getAndIncrement()
+        val body = JSONObject(
+            mapOf(
+                "jsonrpc" to "2.0", "method" to "startSession", "id" to requestId
+            )
+        )
+
+        val response = client.post(BASE_URL) {
             contentType(ContentType.Application.Json)
             setBody(body.toString())
         }
 
-        val result = JSONObject(response.bodyAsText()).getJSONObject("result")
-        sid = result.getString("sid")
-        counter++
+        val result = JSONObject(response.bodyAsText()).optJSONObject("result")
+        sessionId = result?.getString("sid") ?: error("Не удалось инициализировать сессию: $result")
+
+        Log.i(TAG, "Session started with sid=$sessionId")
     }
 
-    private fun sha() {
-        val sumStr = "$method-$counter-$sid"
-        val bytes = MessageDigest.getInstance("SHA-1").digest(sumStr.toByteArray())
-        val shaStr = bytes.joinToString("") { "%02x".format(it) }
-        guid = "${shaStr.substring(0, 8)}-${shaStr.substring(8, 12)}-" + "${
-            shaStr.substring(
-                12,
-                16
-            )
-        }-${shaStr.substring(24, 28)}-${shaStr.substring(28)}"
-        magic = shaStr.substring(16, 24)
-    }
+    private fun generateSecurityData(method: String, id: Int, sid: String): Pair<String, String> {
+        val raw = "$method-$id-$sid"
+        val bytes = MessageDigest.getInstance("SHA-1").digest(raw.toByteArray())
+        val hash = bytes.joinToString("") { "%02x".format(it) }
 
-    suspend fun getUnits(
-        maxLatitude: Double, maxLongitude: Double, minLatitude: Double, minLongitude: Double
-    ): JSONArray {
-        if (sid == null) startSession()
-        method = "getUnitsInRect"
-        sha()
-
-        val params = JSONObject().apply {
-            put("sid", sid)
-            put("minlat", (minLatitude.toString() + "5").toDouble())
-            put("maxlat", (maxLatitude.toString() + "5").toDouble())
-            put("minlong", (minLongitude.toString() + "5").toDouble())
-            put("maxlong", (maxLongitude.toString() + "5").toDouble())
-            put("magic", magic)
+        val guid = buildString {
+            append(hash.substring(0, 8)).append('-')
+            append(hash.substring(8, 12)).append('-')
+            append(hash.substring(12, 16)).append('-')
+            append(hash.substring(24, 28)).append('-')
+            append(hash.substring(28))
         }
+
+        val magic = hash.substring(16, 24)
+        return guid to magic
+    }
+
+    private suspend fun rpcRequest(method: String, params: JSONObject): JSONArray {
+        ensureSession()
+
+        val sid = sessionId ?: return JSONArray()
+        val requestId = counter.getAndIncrement()
+
+        val (guid, magic) = generateSecurityData(method, requestId, sid)
+        params.put("sid", sid)
+        params.put("magic", magic)
 
         val requestBody = JSONObject().apply {
             put("jsonrpc", "2.0")
             put("method", method)
             put("params", params)
-            put("id", counter)
+            put("id", requestId)
         }
-        Log.w("getUnits", requestBody.toString())
-        try {
-            val response = client.post("https://transport.volganet.ru/api/rpc.php?m=$guid") {
+
+        return try {
+            val response = client.post("$BASE_URL?m=$guid") {
                 contentType(ContentType.Application.Json)
                 setBody(requestBody.toString())
             }
-            counter++
-            val json = response.bodyAsText()
-            Log.e("getUnitsInRect", json)
-            return JSONObject(json).getJSONArray("result")
+
+            val jsonText = response.bodyAsText()
+            val json = JSONObject(jsonText)
+
+            Log.d(TAG, "[$method] id=$requestId guid=$guid -> $jsonText")
+
+            json.optJSONArray("result") ?: JSONArray()
         } catch (e: Exception) {
-            Log.e("TransportVolganet", "Ошибка при выполнении getUnitsInRect: $e")
-            return JSONArray()
+            Log.e(TAG, "RPC error ($method): ${e.message}", e)
+            JSONArray()
         }
     }
 
     suspend fun getStops(
         maxLatitude: Double, maxLongitude: Double, minLatitude: Double, minLongitude: Double
     ): JSONArray {
-        if (sid == null) startSession()
-        method = "getStopsInRect"
-        sha()
-
-        val params = JSONObject().apply {
-            put("sid", sid)
-            put("minlat", (minLatitude.toString() + "5").toDouble())
-            put("maxlat", (maxLatitude.toString() + "5").toDouble())
-            put("minlong", (minLongitude.toString() + "5").toDouble())
-            put("maxlong", (maxLongitude.toString() + "5").toDouble())
-            put("magic", magic)
-        }
-
-        val requestBody = JSONObject().apply {
-            put("jsonrpc", "2.0")
-            put("method", method)
-            put("params", params)
-            put("id", counter)
-        }
-        Log.w("getStopsInRect", requestBody.toString())
-        try {
-            val response = client.post("https://transport.volganet.ru/api/rpc.php?m=$guid") {
-                contentType(ContentType.Application.Json)
-                setBody(requestBody.toString())
-            }
-            counter++
-            val json = response.bodyAsText()
-            Log.e("getStops", json)
-            return JSONObject(json).getJSONArray("result")
-        } catch (e: Exception) {
-            Log.e("TransportVolganet", "Ошибка при выполнении getStopsInRect: $e")
-            return JSONArray()
-        }
+        val params = JSONObject(
+            mapOf(
+                "minlat" to (minLatitude.toString() + "5").toDouble(),
+                "maxlat" to (maxLatitude.toString() + "5").toDouble(),
+                "minlong" to (minLongitude.toString() + "5").toDouble(),
+                "maxlong" to (maxLongitude.toString() + "5").toDouble()
+            )
+        )
+        return rpcRequest("getStopsInRect", params)
     }
 
     suspend fun getStopArriveList(stopId: Int): JSONArray {
-        if (sid == null) startSession()
-        method = "getStopArrive"
-        sha()
+        val params = JSONObject(mapOf("st_id" to stopId))
+        return rpcRequest("getStopArrive", params)
+    }
 
-        val params = JSONObject().apply {
-            put("st_id", stopId)
-            put("sid", sid)
-            put("magic", magic)
-        }
-
-        val requestBody = JSONObject().apply {
-            put("jsonrpc", "2.0")
-            put("method", method)
-            put("params", params)
-            put("id", counter)
-        }
-        Log.w("getStopArriveList", requestBody.toString())
-
-        try {
-            val response = client.post("https://transport.volganet.ru/api/rpc.php?m=$guid") {
-                contentType(ContentType.Application.Json)
-                setBody(requestBody.toString())
-            }
-            counter++
-            val json = response.bodyAsText()
-            Log.e("getStopArriveList", json)
-            return JSONObject(json).getJSONArray("result")
-        } catch (e: Exception) {
-            Log.e("TransportVolganet", "Ошибка при выполнении getStopArriveList: $e")
-            return JSONArray()
-        }
+    suspend fun getUnits(
+        maxLatitude: Double, maxLongitude: Double, minLatitude: Double, minLongitude: Double
+    ): JSONArray {
+        val params = JSONObject(
+            mapOf(
+                "minlat" to (minLatitude.toString() + "5").toDouble(),
+                "maxlat" to (maxLatitude.toString() + "5").toDouble(),
+                "minlong" to (minLongitude.toString() + "5").toDouble(),
+                "maxlong" to (maxLongitude.toString() + "5").toDouble()
+            )
+        )
+        return rpcRequest("getUnitsInRect", params)
     }
 }
