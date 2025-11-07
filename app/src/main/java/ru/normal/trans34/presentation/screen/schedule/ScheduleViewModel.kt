@@ -110,7 +110,7 @@ class ScheduleViewModel @Inject constructor(
                         destination = destination,
                         arrivalTime = route.arrivalTime,
                         minutesUntilArrival = computeMinutesUntil(route.arrivalTime),
-                        transportType = mapTransportType(route)
+                        transportType = mapTransportType(route.transportType)
                     )
                 }
 

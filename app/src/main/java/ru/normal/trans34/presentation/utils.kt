@@ -1,10 +1,9 @@
 package ru.normal.trans34.presentation
 
-import ru.normal.trans34.domain.entity.Route
 import ru.normal.trans34.presentation.model.TransportType
 
 
-fun mapTransportType(route: Route): TransportType = when (route.transportType) {
+fun mapTransportType(transportType: Int): TransportType = when (transportType) {
     1 -> TransportType.BUS
     2 -> TransportType.TROLLEY
     3 -> TransportType.TRAM
