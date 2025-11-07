@@ -58,10 +58,13 @@ fun MapScreen() {
     }
 
     val rootCollection = mapView.mapWindow.map.mapObjects
-    val mapObjects = remember { rootCollection.addCollection() }
+    val stopObjects = remember { rootCollection.addCollection() }
+    val unitObjects = remember { rootCollection.addCollection() }
     rootCollection.conflictResolutionMode = ConflictResolutionMode.MAJOR
+
     val currentZoom = remember { mutableFloatStateOf(mapView.mapWindow.map.cameraPosition.zoom) }
-    val placemarks = remember { mutableStateMapOf<String, PlacemarkMapObject>() }
+
+    val stopPlacemarks = remember { mutableStateMapOf<Int, PlacemarkMapObject>() }
     val stopTapListener = remember {
         MapObjectTapListener { p0, p1 ->
             val s = p0.userData as? StopPointUiModel
@@ -79,38 +82,29 @@ fun MapScreen() {
         if (!mapView.isAttachedToWindow) return@LaunchedEffect
 
         if (currentZoom.floatValue < MIN_ZOOM_TO_SHOW) {
-            placemarks.values.forEach { it.isVisible = false }
+            stopPlacemarks.values.forEach { it.isVisible = false }
             return@LaunchedEffect
         }
 
         val busBitmap = bitmapFromMipmap(context, R.mipmap.ic_stop)
-        val busIcon = ImageProvider.fromBitmap(busBitmap)
+        val icon = ImageProvider.fromBitmap(busBitmap)
 
-        val stopsIds = state.stops?.map { it.id.toString() } ?: emptyList()
+        val stopsIds = state.stops?.map { it.id } ?: emptyList()
 
-        val toRemove = placemarks.keys - stopsIds
+        val toRemove = stopPlacemarks.keys - stopsIds
         toRemove.forEach {
-            placemarks[it]?.let { placemark -> mapObjects.remove(placemark) }
-            placemarks.remove(it)
+            stopPlacemarks[it]?.let { placemark -> stopObjects.remove(placemark) }
+            stopPlacemarks.remove(it)
         }
 
         state.stops?.forEach { stop ->
-            val id = stop.id.toString()
-            val existing = placemarks[id]
-
-            if (existing == null) {
-                val placemark = mapObjects.addPlacemark().apply {
-                    geometry = stop.point
-                    setIcon(busIcon)
-                    userData = stop
-                }
-                placemark.addTapListener(stopTapListener)
-                placemarks[id] = placemark
-            } else {
-                existing.geometry = stop.point
-                existing.userData = stop
-                existing.isVisible = true
+            val placemark = stopObjects.addPlacemark().apply {
+                geometry = stop.point
+                setIcon(icon)
+                userData = stop
             }
+            placemark.addTapListener(stopTapListener)
+            stopPlacemarks[stop.id] = placemark
         }
     }
 
