@@ -1,11 +1,13 @@
 package ru.normal.trans34.presentation.screen.map
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yandex.mapkit.Animation
 import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.CameraPosition
+import com.yandex.mapkit.map.VisibleRegion
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -17,21 +19,25 @@ import kotlinx.coroutines.launch
 import ru.normal.trans34.domain.entity.MapBorders
 import ru.normal.trans34.domain.entity.SavedStop
 import ru.normal.trans34.domain.entity.StopPoint
+import ru.normal.trans34.domain.entity.UnitPoint
 import ru.normal.trans34.domain.usecase.AddSavedStopUseCase
 import ru.normal.trans34.domain.usecase.CheckIsStopSavedUseCase
 import ru.normal.trans34.domain.usecase.GetStopArrivalsUseCase
 import ru.normal.trans34.domain.usecase.GetStopsOnMapUseCase
+import ru.normal.trans34.domain.usecase.GetUnitsOnMapUseCase
 import ru.normal.trans34.domain.usecase.RemoveStopUseCase
 import ru.normal.trans34.presentation.computeMinutesUntil
 import ru.normal.trans34.presentation.mapTransportType
 import ru.normal.trans34.presentation.model.RouteUiModel
 import ru.normal.trans34.presentation.model.StopPointUiModel
+import ru.normal.trans34.presentation.model.UnitPointUiModel
 import javax.inject.Inject
 import kotlin.math.abs
 
 @HiltViewModel
 class MapViewModel @Inject constructor(
     private val getStopsOnMapUseCase: GetStopsOnMapUseCase,
+    private val getUnitsOnMapUseCase: GetUnitsOnMapUseCase,
     private val removeStopUseCase: RemoveStopUseCase,
     private val getStopArrivalsUseCase: GetStopArrivalsUseCase,
     private val addSavedStopUseCase: AddSavedStopUseCase,
@@ -144,7 +150,7 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    fun loadStops(borders: MapBorders) {
+    fun loadData(borders: MapBorders) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val stopsList: List<StopPoint> = getStopsOnMapUseCase(borders)

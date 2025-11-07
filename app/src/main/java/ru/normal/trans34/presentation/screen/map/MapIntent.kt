@@ -6,7 +6,7 @@ import ru.normal.trans34.presentation.model.StopPointUiModel
 import ru.normal.trans34.presentation.model.UnitPointUiModel
 
 sealed class MapIntent {
-    data class LoadStops(
+    data class LoadData(
         val center: Point,
         val visibleRegion: VisibleRegion
     ) : MapIntent()

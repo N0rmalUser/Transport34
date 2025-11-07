@@ -205,7 +205,7 @@ fun MapScreen() {
             currentZoom.floatValue = cameraPosition.zoom
             if (finished && cameraPosition.zoom >= MIN_ZOOM_TO_SHOW) {
                 viewModel.handleIntent(
-                    MapIntent.LoadStops(
+                    MapIntent.LoadData(
                         center = cameraPosition.target, visibleRegion = map.visibleRegion
                     )
                 )
