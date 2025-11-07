@@ -1,10 +1,12 @@
 package ru.normal.trans34.data.remote
 
 import android.util.Log
-import io.ktor.client.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
+import io.ktor.client.HttpClient
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import jakarta.inject.Inject
 import org.json.JSONArray
 import org.json.JSONObject
@@ -40,17 +42,55 @@ class TransportApi @Inject constructor(
         val sumStr = "$method-$counter-$sid"
         val bytes = MessageDigest.getInstance("SHA-1").digest(sumStr.toByteArray())
         val shaStr = bytes.joinToString("") { "%02x".format(it) }
-        guid = "${shaStr.substring(0, 8)}-${shaStr.substring(8, 12)}-" +
-                "${shaStr.substring(12, 16)}-${shaStr.substring(24, 28)}-${shaStr.substring(28)}"
+        guid = "${shaStr.substring(0, 8)}-${shaStr.substring(8, 12)}-" + "${
+            shaStr.substring(
+                12,
+                16
+            )
+        }-${shaStr.substring(24, 28)}-${shaStr.substring(28)}"
         magic = shaStr.substring(16, 24)
     }
 
-    
+    suspend fun getUnits(
+        maxLatitude: Double, maxLongitude: Double, minLatitude: Double, minLongitude: Double
+    ): JSONArray {
+        if (sid == null) startSession()
+        method = "getUnitsInRect"
+        sha()
+
+        val params = JSONObject().apply {
+            put("sid", sid)
+            put("minlat", (minLatitude.toString() + "5").toDouble())
+            put("maxlat", (maxLatitude.toString() + "5").toDouble())
+            put("minlong", (minLongitude.toString() + "5").toDouble())
+            put("maxlong", (maxLongitude.toString() + "5").toDouble())
+            put("magic", magic)
+        }
+
+        val requestBody = JSONObject().apply {
+            put("jsonrpc", "2.0")
+            put("method", method)
+            put("params", params)
+            put("id", counter)
+        }
+        Log.w("getStops", requestBody.toString())
+        try {
+            val response = client.post("https://transport.volganet.ru/api/rpc.php?m=$guid") {
+                contentType(ContentType.Application.Json)
+                setBody(requestBody.toString())
+            }
+            counter++
+            val json = response.bodyAsText()
+            Log.e("getUnitsInRect", json)
+            return JSONObject(json).getJSONArray("result")
+        } catch (e: Exception) {
+            Log.e("TransportVolganet", "Ошибка при выполнении getUnitsInRect: $e")
+            return JSONArray()
+        }
+    }
+
     suspend fun getStops(
-        maxLatitude: Double,
-        maxLongitude: Double,
-        minLatitude: Double,
-        minLongitude: Double
+        maxLatitude: Double, maxLongitude: Double, minLatitude: Double, minLongitude: Double
     ): JSONArray {
         if (sid == null) startSession()
         method = "getStopsInRect"
@@ -111,8 +151,8 @@ class TransportApi @Inject constructor(
                 contentType(ContentType.Application.Json)
                 setBody(requestBody.toString())
             }
-            counter ++
-            val json =  response.bodyAsText()
+            counter++
+            val json = response.bodyAsText()
             Log.e("getStopArriveList", json)
             return JSONObject(json).getJSONArray("result")
         } catch (e: Exception) {
