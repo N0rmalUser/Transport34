@@ -45,35 +45,6 @@ class TransportApi @Inject constructor(
         magic = shaStr.substring(16, 24)
     }
 
-    suspend fun getTransTypeTree(): JSONArray {
-        if (sid == null) startSession()
-        method = "getTransTypeTree"
-        sha()
-
-        val requestBody = JSONObject().apply {
-            put("jsonrpc", "2.0")
-            put("method", method)
-            put("params", JSONObject().apply {
-                put("sid", sid)
-                put("magic", magic)
-            })
-            put("id", counter)
-        }
-
-        return try {
-            val response = client.post("https://transport.volganet.ru/api/rpc.php?m=$guid") {
-                contentType(ContentType.Application.Json)
-                setBody(requestBody.toString())
-            }
-            counter++
-            val json = response.bodyAsText()
-            Log.d("getTransTypeTree", json)
-            JSONObject(json).getJSONArray("result")
-        } catch (e: Exception) {
-            Log.e("TransportApi", "Ошибка getTransTypeTree: $e")
-            JSONArray()
-        }
-    }
     
     suspend fun getStops(
         maxLatitude: Double,
