@@ -71,18 +71,18 @@ class TransportApi @Inject constructor(
             put("params", params)
             put("id", counter)
         }
-        Log.w("getStops", requestBody.toString())
+        Log.w("getStopsInRect", requestBody.toString())
         try {
             val response = client.post("https://transport.volganet.ru/api/rpc.php?m=$guid") {
                 contentType(ContentType.Application.Json)
                 setBody(requestBody.toString())
             }
-            counter ++
-            val json =  response.bodyAsText()
+            counter++
+            val json = response.bodyAsText()
             Log.e("getStops", json)
             return JSONObject(json).getJSONArray("result")
         } catch (e: Exception) {
-            Log.e("TransportVolganet", "Ошибка при выполнении getStopArriveList: $e")
+            Log.e("TransportVolganet", "Ошибка при выполнении getStopsInRect: $e")
             return JSONArray()
         }
     }
