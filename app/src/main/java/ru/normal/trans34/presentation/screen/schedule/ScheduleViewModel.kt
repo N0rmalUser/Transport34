@@ -25,7 +25,7 @@ class ScheduleViewModel @Inject constructor(
     private val getStopArrivalsUseCase: GetStopArrivalsUseCase,
     private val getSavedStopsUseCase: GetSavedStopsUseCase,
     private val removeStopUseCase: RemoveStopUseCase,
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ScheduleState())

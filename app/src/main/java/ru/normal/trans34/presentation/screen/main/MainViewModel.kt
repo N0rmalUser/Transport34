@@ -17,7 +17,7 @@ import ru.normal.trans34.presentation.screen.main.utils.isNewerVersion
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val repository: UpdateRepository,
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(UpdateState())

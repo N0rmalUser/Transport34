@@ -42,7 +42,7 @@ class MapViewModel @Inject constructor(
     private val getStopArrivalsUseCase: GetStopArrivalsUseCase,
     private val addSavedStopUseCase: AddSavedStopUseCase,
     private val checkIsStopSavedUseCase: CheckIsStopSavedUseCase,
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) : ViewModel() {
     private val _state = MutableStateFlow(
         MapState(
