@@ -58,7 +58,7 @@ class MapViewModel @Inject constructor(
 
     fun handleIntent(intent: MapIntent) {
         when (intent) {
-            is MapIntent.LoadStops -> {
+            is MapIntent.LoadData -> {
                 val borders = calculateBorders(intent.center, intent.visibleRegion)
                 lastBorders = borders
                 loadData(borders)
@@ -149,6 +149,35 @@ class MapViewModel @Inject constructor(
             )
         }
     }
+    fun refreshUnits(borders: MapBorders) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val unitsList: List<UnitPoint> = getUnitsOnMapUseCase(borders)
+
+                val list = unitsList.map { unit ->
+                    val currentLocale = context.resources.configuration.locales[0].language
+                    val destination =
+                        if (currentLocale == "ru") unit.destinationRu else unit.destinationEn
+
+                    UnitPointUiModel(
+                        id = unit.id,
+                        routeNumber = unit.routeNumber,
+                        destination = destination,
+                        point = Point(unit.latitude, unit.longitude),
+                        azimuth = unit.azimuth,
+                        speed = unit.speed,
+                        systemTime = unit.systemTime,
+                        transportType = mapTransportType(unit.transportType),
+                    )
+                }
+
+                _state.update { it.copy(units = list, error = null) }
+
+            } catch (e: Exception) {
+                _state.update { it.copy(error = e.message ?: "UnitPoint Loading error") }
+            }
+        }
+    }
 
     fun loadData(borders: MapBorders) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -174,13 +203,11 @@ class MapViewModel @Inject constructor(
                         }
                     }
                 }
-
                 _state.update { it.copy(stops = list, error = null) }
-
             } catch (e: Exception) {
-                _state.update { it.copy(error = e.message ?: "Loading error") }
+                _state.update { it.copy(error = e.message ?: "StopPoint Loading error") }
             }
         }
+        refreshUnits(borders)
     }
-
 }
