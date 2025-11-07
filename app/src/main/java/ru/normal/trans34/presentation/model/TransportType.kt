@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.Color
 enum class TransportType(val color: Color) {
     BUS(Color(0xFF4CAF50)),
     ELECTROBUS(Color(0xA23BB6FF)),
-    TROLLEYBUS(Color(0xFFFF9800)),
+    TROLLEY(Color(0xFFFF9800)),
     TRAM(Color(0xFF2196F3)),
     OTHER(Color.Companion.Gray)
 }
