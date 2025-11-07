@@ -33,7 +33,7 @@ class TransportRepositoryImpl(
                 speed = obj.optString("u_speed", "N/A"),
                 latitude = obj.optString("u_lat", "0.0").toDouble(),
                 longitude = obj.optString("u_long", "0.0").toDouble(),
-                azimuth = obj.optString("st_id", "N/A"),
+                azimuth = obj.optString("u_course", "N/A"),
                 systemTime = obj.optString("tc_systime", "N/A")
             )
         }
