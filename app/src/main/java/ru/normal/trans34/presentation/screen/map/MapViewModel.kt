@@ -48,29 +48,41 @@ class MapViewModel @Inject constructor(
 
     private val _savedStops = MutableStateFlow<Map<Int, Boolean>>(emptyMap())
     val savedStops: StateFlow<Map<Int, Boolean>> = _savedStops.asStateFlow()
+    private var lastBorders: MapBorders? = null
 
     fun handleIntent(intent: MapIntent) {
         when (intent) {
             is MapIntent.LoadStops -> {
-                val center = intent.center
-                val visible = intent.visibleRegion
-
-                val latHeight = abs(visible.topLeft.latitude - visible.bottomLeft.latitude)
-                val delta = latHeight * 2
-
-                val borders = MapBorders(
-                    minLatitude = center.latitude - delta,
-                    maxLatitude = center.latitude + delta,
-                    minLongitude = center.longitude - delta,
-                    maxLongitude = center.longitude + delta
-                )
-                loadStops(borders)
+                val borders = calculateBorders(intent.center, intent.visibleRegion)
+                lastBorders = borders
+                loadData(borders)
             }
-
             is MapIntent.DismissBottomSheet -> dismissBottomSheet()
             is MapIntent.SelectStop -> selectStop(intent.stop)
+            is MapIntent.SelectUnit -> selectUnit(intent.unit)
             is MapIntent.ToggleStop -> toggleStop(intent.stop)
+            is MapIntent.RefreshUnits -> {
+                lastBorders?.let { borders ->
+                    refreshUnits(borders)
+                }
+            }
         }
+    }
+
+    private fun calculateBorders(center: Point, visible: VisibleRegion): MapBorders {
+        val latHeight = abs(visible.topLeft.latitude - visible.bottomLeft.latitude)
+        val delta = latHeight * 2
+
+        return MapBorders(
+            minLatitude = center.latitude - delta,
+            maxLatitude = center.latitude + delta,
+            minLongitude = center.longitude - delta,
+            maxLongitude = center.longitude + delta
+        )
+    }
+
+    fun selectUnit(unit: UnitPointUiModel) {
+        Log.e("MapViewModel", "selectUnit: $unit")
     }
 
     fun toggleStop(stop: StopPointUiModel) {

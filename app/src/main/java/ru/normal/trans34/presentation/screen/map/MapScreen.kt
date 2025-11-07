@@ -22,15 +22,20 @@ import com.yandex.mapkit.ConflictResolutionMode
 import com.yandex.mapkit.MapKitFactory
 import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.CameraListener
+import com.yandex.mapkit.map.IconStyle
 import com.yandex.mapkit.map.InputListener
 import com.yandex.mapkit.map.MapObjectTapListener
 import com.yandex.mapkit.map.PlacemarkMapObject
+import com.yandex.mapkit.map.RotationType
 import com.yandex.mapkit.mapview.MapView
 import com.yandex.runtime.image.ImageProvider
 import kotlinx.coroutines.delay
 import ru.normal.trans34.R
 import ru.normal.trans34.presentation.model.StopPointUiModel
+import ru.normal.trans34.presentation.model.TransportType
+import ru.normal.trans34.presentation.model.UnitPointUiModel
 import ru.normal.trans34.presentation.screen.map.component.StopScheduleBottomSheetContent
+import ru.normal.trans34.presentation.screen.map.utils.animatePlacemarkMove
 import ru.normal.trans34.presentation.screen.map.utils.bitmapFromMipmap
 
 private const val MIN_ZOOM_TO_SHOW = 14f
@@ -39,6 +44,13 @@ private const val MIN_ZOOM_TO_SHOW = 14f
 fun MapScreen() {
     val viewModel: MapViewModel = hiltViewModel()
     val state by viewModel.state.collectAsState()
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            viewModel.handleIntent(MapIntent.RefreshUnits)
+            delay(15_000)
+        }
+    }
 
     val context = LocalContext.current
     val mapView = remember { MapView(context) }
@@ -76,9 +88,19 @@ fun MapScreen() {
         }
     }
 
+
+    val unitPlacemarks = remember { mutableStateMapOf<String, PlacemarkMapObject>() }
+    val unitTapListener = remember {
+        MapObjectTapListener { obj, _ ->
+            (obj.userData as? UnitPointUiModel)?.let {
+                viewModel.handleIntent(MapIntent.SelectUnit(it))
+            }
+            true
+        }
+    }
+
     LaunchedEffect(state.stops, currentZoom.floatValue) {
         delay(100)
-
         if (!mapView.isAttachedToWindow) return@LaunchedEffect
 
         if (currentZoom.floatValue < MIN_ZOOM_TO_SHOW) {
@@ -107,6 +129,73 @@ fun MapScreen() {
             stopPlacemarks[stop.id] = placemark
         }
     }
+
+    LaunchedEffect(state.units, currentZoom.floatValue) {
+        delay(100)
+        if (!mapView.isAttachedToWindow) return@LaunchedEffect
+
+        if (currentZoom.floatValue < MIN_ZOOM_TO_SHOW) {
+            unitPlacemarks.values.forEach { it.isVisible = false }
+            return@LaunchedEffect
+        } else {
+            unitPlacemarks.values.forEach { it.isVisible = true }
+        }
+
+        val unitIds = state.units?.map { it.id } ?: emptyList()
+
+        val toRemove = unitPlacemarks.keys - unitIds
+        toRemove.forEach {
+            unitPlacemarks[it]?.let { placemark -> unitObjects.remove(placemark) }
+            unitPlacemarks.remove(it)
+        }
+
+        val iconCache = mutableMapOf<TransportType, ImageProvider>()
+
+        state.units?.forEach { unit ->
+            val icon = iconCache.getOrPut(unit.transportType) {
+                val res = when (unit.transportType) {
+                    TransportType.BUS -> R.drawable.ic_bus
+                    TransportType.TROLLEY -> R.drawable.ic_bus
+                    TransportType.TRAM -> R.drawable.ic_bus
+                    TransportType.ELECTROBUS -> R.drawable.ic_bus
+                    TransportType.OTHER -> R.drawable.ic_bus
+                }
+                val bitmap = bitmapFromMipmap(context, res)
+                ImageProvider.fromBitmap(bitmap)
+            }
+
+            val existing = unitPlacemarks[unit.id]
+            if (existing != null) {
+                val start = existing.geometry
+                val end = unit.point
+
+                if (start.latitude != end.latitude || start.longitude != end.longitude) {
+                    animatePlacemarkMove(existing, start, end)
+                }
+
+                existing.direction = unit.azimuth.toFloatOrNull() ?: 0f
+                existing.userData = unit
+            } else {
+                val placemark = unitObjects.addPlacemark().apply {
+                    userData = unit
+                    geometry = unit.point
+                    setIcon(icon)
+                    setIconStyle(
+                        IconStyle().apply {
+                            rotationType = RotationType.ROTATE
+                            anchor = android.graphics.PointF()
+                            zIndex = 2.0f
+                        }
+                    )
+                    direction = unit.azimuth.toFloatOrNull() ?: 0f
+                    addTapListener(unitTapListener)
+                }
+                unitPlacemarks[unit.id] = placemark
+            }
+        }
+    }
+
+
 
     DisposableEffect(mapView) {
         MapKitFactory.getInstance().onStart()
