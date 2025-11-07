@@ -73,7 +73,7 @@ class TransportApi @Inject constructor(
             put("params", params)
             put("id", counter)
         }
-        Log.w("getStops", requestBody.toString())
+        Log.w("getUnits", requestBody.toString())
         try {
             val response = client.post("https://transport.volganet.ru/api/rpc.php?m=$guid") {
                 contentType(ContentType.Application.Json)
