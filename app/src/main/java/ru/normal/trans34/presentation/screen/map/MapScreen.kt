@@ -189,6 +189,7 @@ fun MapScreen() {
                     val bitmap = bitmapFromVector(
                         context = context,
                         drawableRes = R.drawable.ic_transport_marker,
+                        size = 160,
                         tintColor = unit.transportType.color.toArgb()
                     )
                     val icon = ImageProvider.fromBitmap(bitmap)
