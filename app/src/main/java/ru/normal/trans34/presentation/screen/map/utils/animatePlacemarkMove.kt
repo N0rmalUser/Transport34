@@ -2,29 +2,42 @@ package ru.normal.trans34.presentation.screen.map.utils
 
 import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.PlacemarkMapObject
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import kotlin.math.abs
 
-@OptIn(DelicateCoroutinesApi::class)
-fun animatePlacemarkMove(
+suspend fun animatePlacemarkMove(
     placemark: PlacemarkMapObject,
     start: Point,
     end: Point,
-    duration: Long = 1000L
-) {
-    GlobalScope.launch(Dispatchers.Main) {
-        val steps = 30
-        val stepDelay = duration / steps
-        for (i in 1..steps) {
-            val t = i.toFloat() / steps
-            val lat = start.latitude + (end.latitude - start.latitude) * t
-            val lon = start.longitude + (end.longitude - start.longitude) * t
-            placemark.geometry = Point(lat, lon)
-            delay(stepDelay)
+    steps: Int = 25,
+    durationMs: Long = 500L
+) = withContext(Dispatchers.Main) {
+    if (!placemark.isValid) return@withContext
+
+    val deltaLat = (end.latitude - start.latitude) / steps
+    val deltaLon = (end.longitude - start.longitude) / steps
+    val delayPerStep = durationMs / steps
+
+    for (i in 1..steps) {
+        if (!placemark.isValid) return@withContext
+        val newLat = start.latitude + deltaLat * i
+        val newLon = start.longitude + deltaLon * i
+        try {
+            placemark.geometry = Point(newLat, newLon)
+        } catch (e: Exception) {
+            return@withContext
         }
-        placemark.geometry = end
+        delay(delayPerStep)
+    }
+
+    if (placemark.isValid &&
+        (abs(placemark.geometry.latitude - end.latitude) > 1e-6 ||
+                abs(placemark.geometry.longitude - end.longitude) > 1e-6)
+    ) {
+        try {
+            placemark.geometry = end
+        } catch (_: Exception) {}
     }
 }
