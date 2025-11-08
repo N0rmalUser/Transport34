@@ -1,5 +1,6 @@
 package ru.normal.trans34.presentation.screen.map
 
+import android.graphics.PointF
 import android.util.Log
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -15,6 +16,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
@@ -25,6 +27,7 @@ import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.CameraListener
 import com.yandex.mapkit.map.IconStyle
 import com.yandex.mapkit.map.InputListener
+import com.yandex.mapkit.map.Map
 import com.yandex.mapkit.map.MapObjectTapListener
 import com.yandex.mapkit.map.PlacemarkMapObject
 import com.yandex.mapkit.map.RotationType
@@ -38,7 +41,11 @@ import ru.normal.trans34.presentation.screen.map.component.StopScheduleBottomShe
 import ru.normal.trans34.presentation.screen.map.utils.animatePlacemarkMove
 import ru.normal.trans34.presentation.screen.map.utils.bitmapFromMipmap
 import com.yandex.mapkit.map.TextStyle
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import ru.normal.trans34.presentation.screen.map.utils.bitmapFromVector
+import kotlin.collections.set
+import kotlin.math.abs
 
 private const val MIN_ZOOM_TO_SHOW = 13f
 
@@ -138,13 +145,10 @@ fun MapScreen() {
         }
     }
 
-
-    val initializedUnitIds = remember { mutableSetOf<String>() }
-    val lastPositions = remember { mutableStateMapOf<String, Point>() }
-
     LaunchedEffect(state.units, currentZoom.floatValue) {
-        delay(100)
         if (!mapView.isAttachedToWindow) return@LaunchedEffect
+
+        delay(100)
 
         if (currentZoom.floatValue < MIN_ZOOM_TO_SHOW) {
             unitPlacemarks.values.forEach { it.isVisible = false }
@@ -153,72 +157,71 @@ fun MapScreen() {
             unitPlacemarks.values.forEach { it.isVisible = true }
         }
 
-        val toRemove = unitPlacemarks.keys - state.units?.map { it.id }
+        val currentUnitIds = state.units?.map { it.id }?.toSet() ?: emptySet()
+        val toRemove = unitPlacemarks.keys - currentUnitIds
         toRemove.forEach {
             unitPlacemarks[it]?.let { placemark -> unitObjects.remove(placemark) }
             unitPlacemarks.remove(it)
-            initializedUnitIds.remove(it)
         }
 
-        state.units?.forEach { unit ->
-            val end = unit.point
-            val start = lastPositions[unit.id]
+        coroutineScope {
+            state.units?.forEach { unit ->
+                val end = unit.point
+                val existing = unitPlacemarks[unit.id]
 
-            val existing = unitPlacemarks[unit.id]
+                if (existing != null && existing.isValid) {
+                    existing.userData = unit
 
-            if (existing != null && existing.isValid) {
-                if (start != null && (start.latitude != end.latitude || start.longitude != end.longitude)) {
-                    if (initializedUnitIds.contains(unit.id)) {
-                        animatePlacemarkMove(existing, start, end)
-                    } else {
-                        existing.geometry = end
-                        initializedUnitIds.add(unit.id)
+                    val newDirection = unit.azimuth.toFloatOrNull() ?: 0f
+                    if (abs(existing.direction - newDirection) > 0.001f) {
+                        existing.direction = newDirection
+                    }
+
+                    val currentPoint = existing.geometry
+                    if (abs(currentPoint.latitude - end.latitude) > 1e-7 ||
+                        abs(currentPoint.longitude - end.longitude) > 1e-7
+                    ) {
+                        launch {
+                            animatePlacemarkMove(existing, currentPoint, end)
+                        }
                     }
                 } else {
-                    existing.geometry = end
-                }
-
-                existing.direction = unit.azimuth.toFloatOrNull() ?: 0f
-                existing.userData = unit
-            } else {
-                val bitmap = bitmapFromVector(
-                    context = context,
-                    drawableRes = R.drawable.ic_transport_marker,
-                    tintColor = unit.transportType.color.toArgb()
-                )
-                val icon = ImageProvider.fromBitmap(bitmap)
-
-                val placemark = unitObjects.addPlacemark().apply {
-                    geometry = end
-                    userData = unit
-                    setIcon(icon)
-                    setIconStyle(
-                        IconStyle().apply {
-                            rotationType = RotationType.ROTATE
-                            anchor = android.graphics.PointF(0.5f, 0.5f)
-                            zIndex = 2.0f
-                        }
+                    val bitmap = bitmapFromVector(
+                        context = context,
+                        drawableRes = R.drawable.ic_transport_marker,
+                        tintColor = unit.transportType.color.toArgb()
                     )
-                    setText(
-                        unit.routeNumber,
-                        TextStyle().apply {
-                            size = 8f
-                            placement = TextStyle.Placement.CENTER
-                            offset = 5f
-                            color = 0
-                            zIndex = 3.0f
-                        },
-                    )
-                    direction = unit.azimuth.toFloatOrNull() ?: 0f
-                    addTapListener(unitTapListener)
+                    val icon = ImageProvider.fromBitmap(bitmap)
+
+                    val placemark = unitObjects.addPlacemark().apply {
+                        geometry = end
+                        userData = unit
+                        setIcon(icon)
+                        setIconStyle(
+                            IconStyle().apply {
+                                rotationType = RotationType.ROTATE
+                                anchor = PointF(0.5f, 0.5f)
+                                zIndex = 2.0f
+                            }
+                        )
+                        setText(
+                            unit.routeNumber,
+                            TextStyle().apply {
+                                size = 8f
+                                placement = TextStyle.Placement.CENTER
+                                offset = 5f
+                                color = Color.White.toArgb()
+                                zIndex = 3.0f
+                            }
+                        )
+                        direction = unit.azimuth.toFloatOrNull() ?: 0f
+                        addTapListener(unitTapListener)
+                    }
+                    unitPlacemarks[unit.id] = placemark
                 }
-                unitPlacemarks[unit.id] = placemark
-                initializedUnitIds.add(unit.id)
             }
-            lastPositions[unit.id] = end
         }
     }
-
 
 
     DisposableEffect(mapView) {
@@ -237,11 +240,11 @@ fun MapScreen() {
         }
         mapView.mapWindow.map.addCameraListener(cameraListener)
         val inputListener = object : InputListener {
-            override fun onMapTap(map: com.yandex.mapkit.map.Map, point: Point) {
+            override fun onMapTap(map: Map, point: Point) {
                 Log.d("MapTap", "Tap on map at $point")
             }
 
-            override fun onMapLongTap(map: com.yandex.mapkit.map.Map, point: Point) {}
+            override fun onMapLongTap(map: Map, point: Point) {}
         }
         mapView.mapWindow.map.addInputListener(inputListener)
 
