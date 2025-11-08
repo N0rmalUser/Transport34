@@ -15,6 +15,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -32,13 +33,14 @@ import com.yandex.runtime.image.ImageProvider
 import kotlinx.coroutines.delay
 import ru.normal.trans34.R
 import ru.normal.trans34.presentation.model.StopPointUiModel
-import ru.normal.trans34.presentation.model.TransportType
 import ru.normal.trans34.presentation.model.UnitPointUiModel
 import ru.normal.trans34.presentation.screen.map.component.StopScheduleBottomSheetContent
 import ru.normal.trans34.presentation.screen.map.utils.animatePlacemarkMove
 import ru.normal.trans34.presentation.screen.map.utils.bitmapFromMipmap
+import com.yandex.mapkit.map.TextStyle
+import ru.normal.trans34.presentation.screen.map.utils.bitmapFromVector
 
-private const val MIN_ZOOM_TO_SHOW = 14f
+private const val MIN_ZOOM_TO_SHOW = 13f
 
 @Composable
 fun MapScreen() {
@@ -88,17 +90,6 @@ fun MapScreen() {
         }
     }
 
-
-    val unitPlacemarks = remember { mutableStateMapOf<String, PlacemarkMapObject>() }
-    val unitTapListener = remember {
-        MapObjectTapListener { obj, _ ->
-            (obj.userData as? UnitPointUiModel)?.let {
-                viewModel.handleIntent(MapIntent.SelectUnit(it))
-            }
-            true
-        }
-    }
-
     LaunchedEffect(state.stops, currentZoom.floatValue) {
         delay(100)
         if (!mapView.isAttachedToWindow) return@LaunchedEffect
@@ -130,6 +121,21 @@ fun MapScreen() {
         }
     }
 
+
+    val unitPlacemarks = remember { mutableStateMapOf<String, PlacemarkMapObject>() }
+    val unitTapListener = remember {
+        MapObjectTapListener { obj, _ ->
+            (obj.userData as? UnitPointUiModel)?.let {
+                viewModel.handleIntent(MapIntent.SelectUnit(it))
+            }
+            true
+        }
+    }
+
+
+    val initializedUnitIds = remember { mutableSetOf<String>() }
+    val lastPositions = remember { mutableStateMapOf<String, Point>() }
+
     LaunchedEffect(state.units, currentZoom.floatValue) {
         delay(100)
         if (!mapView.isAttachedToWindow) return@LaunchedEffect
@@ -141,57 +147,69 @@ fun MapScreen() {
             unitPlacemarks.values.forEach { it.isVisible = true }
         }
 
-        val unitIds = state.units?.map { it.id } ?: emptyList()
-
-        val toRemove = unitPlacemarks.keys - unitIds
+        val toRemove = unitPlacemarks.keys - state.units?.map { it.id }
         toRemove.forEach {
             unitPlacemarks[it]?.let { placemark -> unitObjects.remove(placemark) }
             unitPlacemarks.remove(it)
+            initializedUnitIds.remove(it)
         }
 
-        val iconCache = mutableMapOf<TransportType, ImageProvider>()
-
         state.units?.forEach { unit ->
-            val icon = iconCache.getOrPut(unit.transportType) {
-                val res = when (unit.transportType) {
-                    TransportType.BUS -> R.drawable.ic_bus
-                    TransportType.TROLLEY -> R.drawable.ic_bus
-                    TransportType.TRAM -> R.drawable.ic_bus
-                    TransportType.ELECTROBUS -> R.drawable.ic_bus
-                    TransportType.OTHER -> R.drawable.ic_bus
-                }
-                val bitmap = bitmapFromMipmap(context, res)
-                ImageProvider.fromBitmap(bitmap)
-            }
+            val end = unit.point
+            val start = lastPositions[unit.id]
 
             val existing = unitPlacemarks[unit.id]
-            if (existing != null) {
-                val start = existing.geometry
-                val end = unit.point
 
-                if (start.latitude != end.latitude || start.longitude != end.longitude) {
-                    animatePlacemarkMove(existing, start, end)
+            if (existing != null && existing.isValid) {
+                if (start != null && (start.latitude != end.latitude || start.longitude != end.longitude)) {
+                    if (initializedUnitIds.contains(unit.id)) {
+                        animatePlacemarkMove(existing, start, end)
+                    } else {
+                        existing.geometry = end
+                        initializedUnitIds.add(unit.id)
+                    }
+                } else {
+                    existing.geometry = end
                 }
 
                 existing.direction = unit.azimuth.toFloatOrNull() ?: 0f
                 existing.userData = unit
             } else {
+                val bitmap = bitmapFromVector(
+                    context = context,
+                    drawableRes = R.drawable.ic_transport_marker,
+                    tintColor = unit.transportType.color.toArgb()
+                )
+                val icon = ImageProvider.fromBitmap(bitmap)
+
                 val placemark = unitObjects.addPlacemark().apply {
+                    geometry = end
                     userData = unit
-                    geometry = unit.point
                     setIcon(icon)
                     setIconStyle(
                         IconStyle().apply {
                             rotationType = RotationType.ROTATE
-                            anchor = android.graphics.PointF()
+                            anchor = android.graphics.PointF(0.5f, 0.5f)
                             zIndex = 2.0f
                         }
+                    )
+                    setText(
+                        unit.routeNumber,
+                        TextStyle().apply {
+                            size = 8f
+                            placement = TextStyle.Placement.CENTER
+                            offset = 5f
+                            color = 0
+                            zIndex = 3.0f
+                        },
                     )
                     direction = unit.azimuth.toFloatOrNull() ?: 0f
                     addTapListener(unitTapListener)
                 }
                 unitPlacemarks[unit.id] = placemark
+                initializedUnitIds.add(unit.id)
             }
+            lastPositions[unit.id] = end
         }
     }
 
