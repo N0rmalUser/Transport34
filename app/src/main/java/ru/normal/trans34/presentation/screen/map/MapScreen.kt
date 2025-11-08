@@ -94,30 +94,36 @@ fun MapScreen() {
         delay(100)
         if (!mapView.isAttachedToWindow) return@LaunchedEffect
 
-        if (currentZoom.floatValue < MIN_ZOOM_TO_SHOW) {
+        val stops = state.stops ?: emptyList()
+
+        if (currentZoom.floatValue < MIN_ZOOM_TO_SHOW + 1 ) {
             stopPlacemarks.values.forEach { it.isVisible = false }
             return@LaunchedEffect
+        } else {
+            stopPlacemarks.values.forEach { it.isVisible = true }
         }
 
         val busBitmap = bitmapFromMipmap(context, R.mipmap.ic_stop)
         val icon = ImageProvider.fromBitmap(busBitmap)
 
-        val stopsIds = state.stops?.map { it.id } ?: emptyList()
-
-        val toRemove = stopPlacemarks.keys - stopsIds
+        val toRemove = stopPlacemarks.keys - stops.map { it.id }
         toRemove.forEach {
             stopPlacemarks[it]?.let { placemark -> stopObjects.remove(placemark) }
             stopPlacemarks.remove(it)
         }
 
-        state.stops?.forEach { stop ->
-            val placemark = stopObjects.addPlacemark().apply {
-                geometry = stop.point
-                setIcon(icon)
-                userData = stop
+        stops.forEach { stop ->
+            val existing = stopPlacemarks[stop.id]
+            if (existing == null || !existing.isValid) {
+                val placemark = stopObjects.addPlacemark().apply {
+                    geometry = stop.point
+                    setIcon(icon)
+                    userData = stop
+                    addTapListener(stopTapListener)
+                    isVisible = currentZoom.floatValue >= MIN_ZOOM_TO_SHOW
+                }
+                stopPlacemarks[stop.id] = placemark
             }
-            placemark.addTapListener(stopTapListener)
-            stopPlacemarks[stop.id] = placemark
         }
     }
 
