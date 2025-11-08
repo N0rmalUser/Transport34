@@ -21,11 +21,11 @@ class TransportRepositoryImpl(
             mapBorders.minLongitude
         )
 
-        Log.e("TransportVolganet", "mapStops: $json")
+        Log.e("TransportVolganet", "getUnits: $json")
         return List(json.length()) { i ->
             val obj = json.getJSONObject(i)
             UnitPoint(
-                id = obj.optString("mr_id", "N/A"),
+                id = obj.optString("u_id", "N/A"),
                 routeNumber = obj.optString("mr_num", "N/A"),
                 destinationRu = obj.optString("rl_laststation_title", "N/A"),
                 destinationEn = obj.optString("rl_laststation_title_en", "N/A"),
@@ -47,7 +47,7 @@ class TransportRepositoryImpl(
             mapBorders.minLongitude
         )
 
-        Log.e("TransportVolganet", "mapStops: $json")
+        Log.e("TransportVolganet", "getStops: $json")
         return List(json.length()) { i ->
             val obj = json.getJSONObject(i)
             StopPoint(
