@@ -39,7 +39,6 @@ import ru.normal.trans34.presentation.model.StopPointUiModel
 import ru.normal.trans34.presentation.model.UnitPointUiModel
 import ru.normal.trans34.presentation.screen.map.component.StopScheduleBottomSheetContent
 import ru.normal.trans34.presentation.screen.map.utils.animatePlacemarkMove
-import ru.normal.trans34.presentation.screen.map.utils.bitmapFromMipmap
 import com.yandex.mapkit.map.TextStyle
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -110,8 +109,11 @@ fun MapScreen() {
             stopPlacemarks.values.forEach { it.isVisible = true }
         }
 
-        val busBitmap = bitmapFromMipmap(context, R.mipmap.ic_stop)
-        val icon = ImageProvider.fromBitmap(busBitmap)
+        val bitmap = bitmapFromVector(
+            context = context,
+            drawableRes = R.drawable.ic_bus_stop
+        )
+        val icon = ImageProvider.fromBitmap(bitmap)
 
         val toRemove = stopPlacemarks.keys - stops.map { it.id }
         toRemove.forEach {
