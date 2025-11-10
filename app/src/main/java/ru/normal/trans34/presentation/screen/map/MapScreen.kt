@@ -13,20 +13,18 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.yandex.mapkit.Animation
 import com.yandex.mapkit.ConflictResolutionMode
 import com.yandex.mapkit.MapKitFactory
 import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.CameraListener
-import com.yandex.mapkit.map.CameraPosition
 import com.yandex.mapkit.map.IconStyle
 import com.yandex.mapkit.map.InputListener
 import com.yandex.mapkit.map.Map
@@ -35,6 +33,7 @@ import com.yandex.mapkit.map.PlacemarkMapObject
 import com.yandex.mapkit.map.RotationType
 import com.yandex.mapkit.map.TextStyle
 import com.yandex.mapkit.mapview.MapView
+import com.yandex.mapkit.user_location.UserLocationLayer
 import com.yandex.runtime.image.ImageProvider
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -42,6 +41,7 @@ import kotlinx.coroutines.launch
 import ru.normal.trans34.R
 import ru.normal.trans34.presentation.model.StopPointUiModel
 import ru.normal.trans34.presentation.model.UnitPointUiModel
+import ru.normal.trans34.presentation.screen.map.component.MapContent
 import ru.normal.trans34.presentation.screen.map.component.StopScheduleBottomSheetContent
 import ru.normal.trans34.presentation.screen.map.utils.animatePlacemarkMove
 import ru.normal.trans34.presentation.screen.map.utils.bitmapFromVector
@@ -258,7 +258,39 @@ fun MapScreen() {
         }
     }
 
-    AndroidView(factory = { mapView })
+
+    val userLocationLayerState = remember { mutableStateOf<UserLocationLayer?>(null) }
+
+    DisposableEffect(mapView) {
+        val layer = MapKitFactory.getInstance().createUserLocationLayer(mapView.mapWindow)
+        layer.isVisible = true
+        layer.isHeadingModeActive = true
+
+//        TODO: Сделать иконки для местоположения
+//        layer.setObjectListener(object : UserLocationObjectListener {
+//            val bitmap = bitmapFromVector(context, R.drawable.qwe, 100, Color.Red.toArgb())
+//            val icon = ImageProvider.fromBitmap(bitmap)
+//            override fun onObjectAdded(view: UserLocationView) {
+//                view.pin.setIcon(icon)
+//                view.arrow.setIcon(icon)
+//                view.accuracyCircle.fillColor = 0x3300AEEF
+//            }
+
+//            override fun onObjectRemoved(view: UserLocationView) {}
+//            override fun onObjectUpdated(view: UserLocationView, event: ObjectEvent) {}
+//        }
+//    )
+        userLocationLayerState.value = layer
+        onDispose {
+            layer.isVisible = false
+        }
+    }
+
+
+    MapContent(
+        mapView,
+        userLocationLayerState
+    )
 
 
     val sheetState = rememberModalBottomSheetState()
