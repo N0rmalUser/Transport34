@@ -43,8 +43,8 @@ android {
             ?: error("GITHUB_USER is missing in local.properties")
         buildConfigField("String", "GITHUB_USER", "\"$githubUser\"")
 
-        val repoName = properties.getProperty("REPO_NAME")
-            ?: error("REPO_NAME is missing in local.properties")
+        val repoName =
+            properties.getProperty("REPO_NAME") ?: error("REPO_NAME is missing in local.properties")
         buildConfigField("String", "REPO_NAME", "\"$repoName\"")
     }
 
@@ -66,8 +66,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
             )
             if (keystorePropertiesFile.exists()) {
                 signingConfig = signingConfigs.getByName("release")
@@ -84,16 +83,24 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
-        freeCompilerArgs += listOf(
-            "-Xopt-in=androidx.compose.material3.ExperimentalMaterial3ExpressiveApi",
-            "-Xopt-in=androidx.compose.material3.ExperimentalMaterial3Api"
-        )
-    }
+
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+
+    kotlin {
+        android {
+            compilerOptions {
+                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+                freeCompilerArgs.addAll(
+                    listOf(
+                        "-Xopt-in=androidx.compose.material3.ExperimentalMaterial3ExpressiveApi",
+                        "-Xopt-in=androidx.compose.material3.ExperimentalMaterial3Api"
+                    )
+                )
+            }
+        }
     }
 
     splits {
@@ -104,6 +111,7 @@ android {
             isUniversalApk = false
         }
     }
+
     applicationVariants.all {
         outputs.all {
             (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName =
@@ -140,7 +148,7 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
-    
+
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
@@ -156,12 +164,6 @@ tasks.register("printVersionName") {
 }
 
 fun String.runCommand(workingDir: File): String {
-    return ProcessBuilder(*split(" ").toTypedArray())
-        .directory(workingDir)
-        .redirectErrorStream(true)
-        .start()
-        .inputStream
-        .bufferedReader()
-        .readText()
-        .trim()
+    return ProcessBuilder(*split(" ").toTypedArray()).directory(workingDir)
+        .redirectErrorStream(true).start().inputStream.bufferedReader().readText().trim()
 }
