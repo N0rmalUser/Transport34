@@ -21,29 +21,31 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.yandex.mapkit.Animation
 import com.yandex.mapkit.ConflictResolutionMode
 import com.yandex.mapkit.MapKitFactory
 import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.CameraListener
+import com.yandex.mapkit.map.CameraPosition
 import com.yandex.mapkit.map.IconStyle
 import com.yandex.mapkit.map.InputListener
 import com.yandex.mapkit.map.Map
 import com.yandex.mapkit.map.MapObjectTapListener
 import com.yandex.mapkit.map.PlacemarkMapObject
 import com.yandex.mapkit.map.RotationType
+import com.yandex.mapkit.map.TextStyle
 import com.yandex.mapkit.mapview.MapView
 import com.yandex.runtime.image.ImageProvider
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import ru.normal.trans34.R
 import ru.normal.trans34.presentation.model.StopPointUiModel
 import ru.normal.trans34.presentation.model.UnitPointUiModel
 import ru.normal.trans34.presentation.screen.map.component.StopScheduleBottomSheetContent
 import ru.normal.trans34.presentation.screen.map.utils.animatePlacemarkMove
-import com.yandex.mapkit.map.TextStyle
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import ru.normal.trans34.presentation.screen.map.utils.bitmapFromVector
-import kotlin.collections.set
+import ru.normal.trans34.presentation.screen.map.utils.moveCameraToPoint
 import kotlin.math.abs
 
 private const val MIN_ZOOM_TO_SHOW = 13f
@@ -86,23 +88,24 @@ fun MapScreen() {
 
     val stopPlacemarks = remember { mutableStateMapOf<Int, PlacemarkMapObject>() }
     val stopTapListener = remember {
-        MapObjectTapListener { p0, p1 ->
-            val s = p0.userData as? StopPointUiModel
-            if (s != null) {
-                Log.d("MapTap", "Tap on stop: ${s.id}")
-                viewModel.handleIntent(MapIntent.SelectStop(s))
+        MapObjectTapListener { obj, _ ->
+            (obj.userData as? StopPointUiModel)?.let {
+                viewModel.handleIntent(MapIntent.SelectStop(it))
+                moveCameraToPoint(
+                    it.point, mapView
+                )
             }
             true
         }
     }
 
     LaunchedEffect(state.stops, currentZoom.floatValue) {
-        delay(100)
         if (!mapView.isAttachedToWindow) return@LaunchedEffect
+        delay(100)
 
         val stops = state.stops ?: emptyList()
 
-        if (currentZoom.floatValue < MIN_ZOOM_TO_SHOW + 1 ) {
+        if (currentZoom.floatValue < MIN_ZOOM_TO_SHOW + 1) {
             stopPlacemarks.values.forEach { it.isVisible = false }
             return@LaunchedEffect
         } else {
@@ -110,8 +113,7 @@ fun MapScreen() {
         }
 
         val bitmap = bitmapFromVector(
-            context = context,
-            drawableRes = R.drawable.ic_bus_stop
+            context = context, drawableRes = R.drawable.ic_bus_stop
         )
         val icon = ImageProvider.fromBitmap(bitmap)
 
@@ -142,6 +144,9 @@ fun MapScreen() {
         MapObjectTapListener { obj, _ ->
             (obj.userData as? UnitPointUiModel)?.let {
                 viewModel.handleIntent(MapIntent.SelectUnit(it))
+                moveCameraToPoint(
+                    it.point, mapView
+                )
             }
             true
         }
@@ -149,7 +154,6 @@ fun MapScreen() {
 
     LaunchedEffect(state.units, currentZoom.floatValue) {
         if (!mapView.isAttachedToWindow) return@LaunchedEffect
-
         delay(100)
 
         if (currentZoom.floatValue < MIN_ZOOM_TO_SHOW) {
@@ -180,9 +184,7 @@ fun MapScreen() {
                     }
 
                     val currentPoint = existing.geometry
-                    if (abs(currentPoint.latitude - end.latitude) > 1e-7 ||
-                        abs(currentPoint.longitude - end.longitude) > 1e-7
-                    ) {
+                    if (abs(currentPoint.latitude - end.latitude) > 1e-7 || abs(currentPoint.longitude - end.longitude) > 1e-7) {
                         launch {
                             animatePlacemarkMove(existing, currentPoint, end)
                         }
@@ -205,18 +207,15 @@ fun MapScreen() {
                                 rotationType = RotationType.ROTATE
                                 anchor = PointF(0.5f, 0.5f)
                                 zIndex = 2.0f
-                            }
-                        )
+                            })
                         setText(
-                            unit.routeNumber,
-                            TextStyle().apply {
+                            unit.routeNumber, TextStyle().apply {
                                 size = 8f
                                 placement = TextStyle.Placement.CENTER
                                 offset = 5f
                                 color = Color.White.toArgb()
                                 zIndex = 3.0f
-                            }
-                        )
+                            })
                         direction = unit.azimuth.toFloatOrNull() ?: 0f
                         addTapListener(unitTapListener)
                     }
@@ -277,7 +276,7 @@ fun MapScreen() {
         ModalBottomSheet(
             sheetState = sheetState,
             onDismissRequest = { viewModel.handleIntent(MapIntent.DismissBottomSheet) },
-            modifier = Modifier.fillMaxHeight()
+            modifier = Modifier.fillMaxHeight(),
         ) {
             state.selectedStop?.let { selectedStop ->
                 StopScheduleBottomSheetContent(
