@@ -3,7 +3,6 @@ package ru.normal.trans34.presentation.screen.schedule.component
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -22,12 +21,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ru.normal.trans34.R
 import ru.normal.trans34.presentation.model.TransportType
-import ru.normal.trans34.presentation.model.RouteUiModel
+import ru.normal.trans34.presentation.model.UnitCardUiModel
 
 
 @Composable
 fun RouteList(
-    routes: List<RouteUiModel>,
+    routes: List<UnitCardUiModel>,
     modifier: Modifier = Modifier
 ) {
 
@@ -71,7 +70,7 @@ fun RouteListPreview(
 ) {
     RouteList(
         listOf(
-            RouteUiModel(
+            UnitCardUiModel(
                 routeId = 0,
                 routeNumber = "55",
                 destination = "Детский центр (Б)",
@@ -79,7 +78,7 @@ fun RouteListPreview(
                 minutesUntilArrival = 0,
                 transportType = TransportType.BUS
             ),
-            RouteUiModel(
+            UnitCardUiModel(
                 routeId = 1,
                 routeNumber = "5a",
                 destination = "Родниковая долина",
@@ -87,7 +86,7 @@ fun RouteListPreview(
                 minutesUntilArrival = 1,
                 transportType = TransportType.BUS
             ),
-            RouteUiModel(
+            UnitCardUiModel(
                 routeId = 2,
                 routeNumber = "15Э",
                 destination = "Ж/д вокзал",
@@ -95,7 +94,7 @@ fun RouteListPreview(
                 minutesUntilArrival = 2,
                 transportType = TransportType.BUS
             ),
-            RouteUiModel(
+            UnitCardUiModel(
                 routeId = 3,
                 routeNumber = "77",
                 destination = "ТРЦ КомсоМОЛЛ (Б)",

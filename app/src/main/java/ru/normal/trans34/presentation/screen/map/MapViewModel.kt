@@ -28,7 +28,7 @@ import ru.normal.trans34.domain.usecase.GetUnitsOnMapUseCase
 import ru.normal.trans34.domain.usecase.RemoveStopUseCase
 import ru.normal.trans34.presentation.computeMinutesUntil
 import ru.normal.trans34.presentation.mapTransportType
-import ru.normal.trans34.presentation.model.RouteUiModel
+import ru.normal.trans34.presentation.model.UnitCardUiModel
 import ru.normal.trans34.presentation.model.StopPointUiModel
 import ru.normal.trans34.presentation.model.UnitPointUiModel
 import javax.inject.Inject
@@ -118,7 +118,7 @@ class MapViewModel @Inject constructor(
                     val destination =
                         if (currentLocale == "ru") route.destinationRu else route.destinationEn
 
-                    RouteUiModel(
+                    UnitCardUiModel(
                         routeId = route.id,
                         routeNumber = route.routeNumber,
                         destination = destination,

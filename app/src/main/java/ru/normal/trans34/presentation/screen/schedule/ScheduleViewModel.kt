@@ -16,7 +16,7 @@ import ru.normal.trans34.domain.usecase.GetStopArrivalsUseCase
 import ru.normal.trans34.domain.usecase.RemoveStopUseCase
 import ru.normal.trans34.presentation.computeMinutesUntil
 import ru.normal.trans34.presentation.mapTransportType
-import ru.normal.trans34.presentation.model.RouteUiModel
+import ru.normal.trans34.presentation.model.UnitCardUiModel
 import ru.normal.trans34.presentation.model.StopScheduleUiModel
 import javax.inject.Inject
 
@@ -104,7 +104,7 @@ class ScheduleViewModel @Inject constructor(
                     val destination =
                         if (currentLocale == "ru") route.destinationRu else route.destinationEn
 
-                    RouteUiModel(
+                    UnitCardUiModel(
                         routeId = route.id,
                         routeNumber = route.routeNumber,
                         destination = destination,

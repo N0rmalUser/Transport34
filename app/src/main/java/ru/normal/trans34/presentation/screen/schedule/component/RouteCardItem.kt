@@ -13,13 +13,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ru.normal.trans34.presentation.model.TransportType
-import ru.normal.trans34.presentation.model.RouteUiModel
+import ru.normal.trans34.presentation.model.UnitCardUiModel
 
 import androidx.compose.ui.res.stringResource
 import ru.normal.trans34.R
 
 @Composable
-fun RouteCardItem(route: RouteUiModel) {
+fun RouteCardItem(route: UnitCardUiModel) {
     val cardColor = MaterialTheme.colorScheme.surfaceContainerLow
 
     Card(
@@ -98,7 +98,7 @@ fun RouteCardItem(route: RouteUiModel) {
 fun RouteCardItemPreview() {
     Column {
         RouteCardItem(
-            RouteUiModel(
+            UnitCardUiModel(
                 routeId = 0,
                 routeNumber = "55",
                 destination = "Детский центр (Б)",
@@ -107,7 +107,7 @@ fun RouteCardItemPreview() {
                 transportType = TransportType.BUS
             )
         )
-        RouteCardItem(RouteUiModel(
+        RouteCardItem(UnitCardUiModel(
             routeId = 1,
             routeNumber = "5a",
             destination = "Родниковая долина",

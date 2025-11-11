@@ -16,14 +16,14 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
-import ru.normal.trans34.presentation.model.RouteUiModel
+import ru.normal.trans34.presentation.model.UnitCardUiModel
 import ru.normal.trans34.presentation.model.StopPointUiModel
 import ru.normal.trans34.presentation.screen.schedule.component.RouteList
 
 @Composable
 fun StopScheduleBottomSheetContent(
     stop: StopPointUiModel,
-    timetable: List<RouteUiModel>,
+    timetable: List<UnitCardUiModel>,
     isSaved: Boolean = false,
     onSaveStop: (StopPointUiModel) -> Unit
 ) {
