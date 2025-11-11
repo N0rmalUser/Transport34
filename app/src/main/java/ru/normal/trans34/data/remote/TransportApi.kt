@@ -116,6 +116,11 @@ class TransportApi @Inject constructor(
         return rpcRequest("getStopArrive", params)
     }
 
+    suspend fun getUnitArriveList(unitId: String): JSONArray {
+        val params = JSONObject(mapOf("unit_id" to unitId))
+        return rpcRequest("getUnitArrive", params)
+    }
+
     suspend fun getUnits(
         maxLatitude: Double, maxLongitude: Double, minLatitude: Double, minLongitude: Double
     ): JSONArray {

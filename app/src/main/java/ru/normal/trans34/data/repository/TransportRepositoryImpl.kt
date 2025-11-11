@@ -6,6 +6,7 @@ import ru.normal.trans34.data.remote.TransportApi
 import ru.normal.trans34.domain.entity.Route
 import ru.normal.trans34.domain.repository.TransportRepository
 import ru.normal.trans34.domain.entity.MapBorders
+import ru.normal.trans34.domain.entity.Stop
 import ru.normal.trans34.domain.entity.StopPoint
 import ru.normal.trans34.domain.entity.UnitPoint
 
@@ -74,6 +75,21 @@ class TransportRepositoryImpl(
                 arrivalTime = obj.optString("tc_arrivetime", "N/A"),
                 systemTime = obj.optString("tc_systime", "N/A"),
                 transportType = obj.optInt("tt_id", 0)
+            )
+        }
+    }
+
+    override suspend fun getUnitArriveList(unitId: String): List<Stop> {
+        val json: JSONArray = api.getUnitArriveList(unitId)
+
+        Log.e("TransportVolganet", "unitId=$unitId: $json")
+        return List(json.length()) { i ->
+            val obj = json.getJSONObject(i)
+            Stop(
+                id = obj.optInt("st_id", 0),
+                titleRu = obj.optString("st_title", "N/A"),
+                titleEn = obj.optString("st_title_en", "N/A"),
+                arriveTime = obj.optString("ta_arrivetime", "N/A")
             )
         }
     }
