@@ -43,6 +43,7 @@ import ru.normal.trans34.presentation.model.StopPointUiModel
 import ru.normal.trans34.presentation.model.UnitPointUiModel
 import ru.normal.trans34.presentation.screen.map.component.MapContent
 import ru.normal.trans34.presentation.screen.map.component.StopScheduleBottomSheetContent
+import ru.normal.trans34.presentation.screen.map.component.UnitBottomSheetContent
 import ru.normal.trans34.presentation.screen.map.utils.animatePlacemarkMove
 import ru.normal.trans34.presentation.screen.map.utils.bitmapFromVector
 import ru.normal.trans34.presentation.screen.map.utils.moveCameraToPoint
@@ -316,6 +317,23 @@ fun MapScreen() {
                     timetable = state.routesByStop[selectedStop.id] ?: emptyList(),
                     isSaved = savedStops[selectedStop.id] ?: false,
                     onSaveStop = { stop -> viewModel.handleIntent(MapIntent.ToggleStop(stop)) })
+            }
+        }
+    }
+
+    if (state.selectedUnit != null) {
+        ModalBottomSheet(
+            sheetState = sheetState,
+            onDismissRequest = { viewModel.handleIntent(MapIntent.DismissBottomSheet) },
+            modifier = Modifier.fillMaxHeight(),
+        ) {
+            state.selectedUnit?.let { selectedUnit ->
+                UnitBottomSheetContent(
+                    unit = selectedUnit,
+                    timetable = state.stopsByUnit[selectedUnit.id] ?: emptyList(),
+                    // TODO: Сделать сохранение маршрутов по id маршрута
+//                    isSaved = savedRoutes[selectedUnit.id] ?: false,
+                    onSaveUnit = { unit -> viewModel.handleIntent(MapIntent.ToggleUnit(unit)) })
             }
         }
     }
