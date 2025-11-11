@@ -24,10 +24,12 @@ import ru.normal.trans34.domain.usecase.AddSavedStopUseCase
 import ru.normal.trans34.domain.usecase.CheckIsStopSavedUseCase
 import ru.normal.trans34.domain.usecase.GetStopArrivalsUseCase
 import ru.normal.trans34.domain.usecase.GetStopsOnMapUseCase
+import ru.normal.trans34.domain.usecase.GetUnitArrivalsUseCase
 import ru.normal.trans34.domain.usecase.GetUnitsOnMapUseCase
 import ru.normal.trans34.domain.usecase.RemoveStopUseCase
 import ru.normal.trans34.presentation.computeMinutesUntil
 import ru.normal.trans34.presentation.mapTransportType
+import ru.normal.trans34.presentation.model.StopCardUiModel
 import ru.normal.trans34.presentation.model.UnitCardUiModel
 import ru.normal.trans34.presentation.model.StopPointUiModel
 import ru.normal.trans34.presentation.model.UnitPointUiModel
@@ -40,6 +42,7 @@ class MapViewModel @Inject constructor(
     private val getUnitsOnMapUseCase: GetUnitsOnMapUseCase,
     private val removeStopUseCase: RemoveStopUseCase,
     private val getStopArrivalsUseCase: GetStopArrivalsUseCase,
+    private val getUnitArrivalsUseCase: GetUnitArrivalsUseCase,
     private val addSavedStopUseCase: AddSavedStopUseCase,
     private val checkIsStopSavedUseCase: CheckIsStopSavedUseCase,
     @param:ApplicationContext private val context: Context
@@ -54,6 +57,11 @@ class MapViewModel @Inject constructor(
 
     private val _savedStops = MutableStateFlow<Map<Int, Boolean>>(emptyMap())
     val savedStops: StateFlow<Map<Int, Boolean>> = _savedStops.asStateFlow()
+
+    private val _savedUnits = MutableStateFlow<Map<String, Boolean>>(emptyMap())
+    val savedUnits: StateFlow<Map<String, Boolean>> = _savedUnits.asStateFlow()
+
+
     private var lastBorders: MapBorders? = null
 
     fun handleIntent(intent: MapIntent) {
@@ -72,6 +80,7 @@ class MapViewModel @Inject constructor(
                     refreshUnits(borders)
                 }
             }
+            is MapIntent.ToggleUnit -> (toggleUnit(intent.unit))
         }
     }
 
@@ -85,10 +94,6 @@ class MapViewModel @Inject constructor(
             minLongitude = center.longitude - delta,
             maxLongitude = center.longitude + delta
         )
-    }
-
-    fun selectUnit(unit: UnitPointUiModel) {
-        Log.e("MapViewModel", "selectUnit: $unit")
     }
 
     fun toggleStop(stop: StopPointUiModel) {
@@ -107,6 +112,26 @@ class MapViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+
+    private fun toggleUnit(unit: UnitPointUiModel) {
+        Log.d("toggleUnit", "toggle unit save")
+//        viewModelScope.launch(Dispatchers.IO) {
+//            val isSaved = savedUnits.value[unit.id] ?: false
+//            if (isSaved) {
+//                removeStopUseCase(unit.id)
+//            } else {
+//                addSavedStopUseCase(
+//                    SavedUnit(
+//                        id = unit.id,
+//                        tabId = 0,
+//                        destinationRu = unit.destination,
+//                        destinationEn = unit.destination
+//                    )
+//                )
+//            }
+//        }
     }
 
     private fun selectStop(stop: StopPointUiModel) {
@@ -131,6 +156,40 @@ class MapViewModel @Inject constructor(
                     it.copy(
                         selectedStop = stop,
                         routesByStop = _state.value.routesByStop + (stop.id to list),
+                        selectedUnit = null,
+                        error = null
+                    )
+                }
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(
+                    error = e.message ?: "Loading error"
+                )
+            }
+        }
+    }
+
+    fun selectUnit(unit: UnitPointUiModel) {
+        Log.d("selectUnit", "unit selected")
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val arrivals = getUnitArrivalsUseCase(unit.id)
+                val list = arrivals.map { unit ->
+                    val currentLocale = context.resources.configuration.locales[0].language
+                    val title =
+                        if (currentLocale == "ru") unit.titleRu else unit.titleEn
+
+                    StopCardUiModel(
+                        id = unit.id,
+                        arrivalTime = unit.arriveTime,
+                        title = title,
+                        minutesUntilArrival = computeMinutesUntil(unit.arriveTime)
+                    )
+                }
+                _state.update {
+                    it.copy(
+                        selectedUnit = unit,
+                        stopsByUnit = _state.value.stopsByUnit + (unit.id to list),
+                        selectedStop = null,
                         error = null
                     )
                 }

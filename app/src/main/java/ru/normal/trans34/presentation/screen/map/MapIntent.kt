@@ -15,5 +15,5 @@ sealed class MapIntent {
     object DismissBottomSheet : MapIntent()
     object RefreshUnits : MapIntent()
     data class ToggleStop(val stop: StopPointUiModel) : MapIntent()
-
+    data class ToggleUnit(val unit: UnitPointUiModel) : MapIntent()
 }
