@@ -35,7 +35,7 @@ fun MapContent(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(end = 16.dp, bottom = 24.dp),
+                .padding(end = 16.dp, bottom = 32.dp),
             verticalArrangement = Arrangement.Bottom,
             horizontalAlignment = Alignment.End
         ) {
@@ -49,7 +49,7 @@ fun MapContent(
                         .zIndex(1f),
                     shape = RoundedCornerShape(12.dp),
                     colors = IconButtonDefaults.filledTonalIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.7f)
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.8f)
                     ),
                     onClick = {
                         val layer = userLocationLayerState.value ?: return@FilledTonalIconButton
@@ -65,7 +65,7 @@ fun MapContent(
                 ) {
                     Icon(
                         imageVector = Icons.Filled.MyLocation,
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         contentDescription = "My location"
                     )
                 }
