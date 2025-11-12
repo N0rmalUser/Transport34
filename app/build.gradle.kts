@@ -135,6 +135,8 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.bundles.compose)
 
+    implementation(libs.androidx.datastore)
+
     implementation(libs.yandex.maps)
 
     implementation(libs.androidx.ui.text.google.fonts)
