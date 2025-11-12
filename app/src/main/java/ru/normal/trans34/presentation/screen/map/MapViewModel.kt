@@ -33,6 +33,7 @@ import ru.normal.trans34.presentation.model.StopPointUiModel
 import ru.normal.trans34.presentation.model.UnitPointUiModel
 import javax.inject.Inject
 import kotlin.math.abs
+import ru.normal.trans34.domain.repository.SettingsRepository
 
 @HiltViewModel
 class MapViewModel @Inject constructor(
@@ -42,6 +43,7 @@ class MapViewModel @Inject constructor(
     private val getStopArrivalsUseCase: GetStopArrivalsUseCase,
     private val addSavedStopUseCase: AddSavedStopUseCase,
     private val checkIsStopSavedUseCase: CheckIsStopSavedUseCase,
+    private val settingsRepository: SettingsRepository,
     @param:ApplicationContext private val context: Context
 ) : ViewModel() {
     private val _state = MutableStateFlow(
@@ -55,6 +57,13 @@ class MapViewModel @Inject constructor(
     private val _savedStops = MutableStateFlow<Map<Int, Boolean>>(emptyMap())
     val savedStops: StateFlow<Map<Int, Boolean>> = _savedStops.asStateFlow()
     private var lastBorders: MapBorders? = null
+
+    init {
+        viewModelScope.launch {
+            val saved = settingsRepository.getShowUnits()
+            _state.update { it.copy(showUnits = saved) }
+        }
+    }
 
     fun handleIntent(intent: MapIntent) {
         when (intent) {
@@ -72,6 +81,7 @@ class MapViewModel @Inject constructor(
                     refreshUnits(borders)
                 }
             }
+            is MapIntent.ToggleUnitsVisibility -> toggleUnitsVisibility(intent.show)
         }
     }
 
@@ -85,6 +95,20 @@ class MapViewModel @Inject constructor(
             minLongitude = center.longitude - delta,
             maxLongitude = center.longitude + delta
         )
+    }
+
+    private fun toggleUnitsVisibility(show: Boolean) {
+        _state.update {
+            it.copy(
+                showUnits = show,
+                units = if (!show) emptyList() else it.units
+            )
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            settingsRepository.saveShowUnits(show)
+            if (show) lastBorders?.let { refreshUnits(it) }
+        }
     }
 
     fun selectUnit(unit: UnitPointUiModel) {
@@ -149,7 +173,9 @@ class MapViewModel @Inject constructor(
             )
         }
     }
+
     fun refreshUnits(borders: MapBorders) {
+        if (!_state.value.showUnits) return
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val unitsList: List<UnitPoint> = getUnitsOnMapUseCase(borders)

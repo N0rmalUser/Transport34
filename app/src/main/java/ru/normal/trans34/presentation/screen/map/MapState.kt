@@ -13,5 +13,6 @@ data class MapState(
     val units: List<UnitPointUiModel>? = null,
     val selectedStop: StopPointUiModel? = null,
     val routesByStop: Map<Int, List<RouteUiModel>> = emptyMap(),
+    val showUnits: Boolean = true,
     val error: String? = null
 )

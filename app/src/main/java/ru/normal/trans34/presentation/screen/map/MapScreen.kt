@@ -152,11 +152,11 @@ fun MapScreen() {
         }
     }
 
-    LaunchedEffect(state.units, currentZoom.floatValue) {
+    LaunchedEffect(state.units, currentZoom.floatValue, state.showUnits) {
         if (!mapView.isAttachedToWindow) return@LaunchedEffect
         delay(100)
 
-        if (currentZoom.floatValue < MIN_ZOOM_TO_SHOW) {
+        if (currentZoom.floatValue < MIN_ZOOM_TO_SHOW || !state.showUnits) {
             unitPlacemarks.values.forEach { it.isVisible = false }
             return@LaunchedEffect
         } else {
