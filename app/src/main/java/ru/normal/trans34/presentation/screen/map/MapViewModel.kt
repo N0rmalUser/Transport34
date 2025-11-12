@@ -60,8 +60,18 @@ class MapViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            val saved = settingsRepository.getShowUnits()
-            _state.update { it.copy(showUnits = saved) }
+            settingsRepository.showUnitsFlow()
+                .collect { show ->
+                    _state.update { current ->
+                        current.copy(
+                            showUnits = show,
+                            units = if (!show) emptyList() else current.units
+                        )
+                    }
+                    if (show) {
+                        lastBorders?.let { refreshUnits(it) }
+                    }
+                }
         }
     }
 
@@ -105,7 +115,7 @@ class MapViewModel @Inject constructor(
             )
         }
 
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             settingsRepository.saveShowUnits(show)
             if (show) lastBorders?.let { refreshUnits(it) }
         }
