@@ -76,7 +76,7 @@ android {
             isMinifyEnabled = false
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
-            resValue("string", "app_name", "Transport 34 Debug")
+            resValue("string", "app_name", "Debug 34")
         }
     }
     compileOptions {
@@ -134,6 +134,8 @@ dependencies {
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.bundles.compose)
+
+    implementation(libs.androidx.datastore)
 
     implementation(libs.yandex.maps)
 

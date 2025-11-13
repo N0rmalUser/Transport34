@@ -16,5 +16,6 @@ data class MapState(
     val selectedUnit: UnitPointUiModel? = null,
     val routesByStop: Map<Int, List<UnitCardUiModel>> = emptyMap(),
     val stopsByUnit: Map<String, List<StopCardUiModel>> = emptyMap(),
+    val showUnits: Boolean = true,
     val error: String? = null
 )
