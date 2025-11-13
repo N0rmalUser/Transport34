@@ -117,7 +117,7 @@ class TransportApi @Inject constructor(
     }
 
     suspend fun getUnitArriveList(unitId: String): JSONArray {
-        val params = JSONObject(mapOf("unit_id" to unitId))
+        val params = JSONObject(mapOf("u_id" to unitId))
         return rpcRequest("getUnitArrive", params)
     }
 
