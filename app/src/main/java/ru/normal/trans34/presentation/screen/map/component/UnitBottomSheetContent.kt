@@ -1,7 +1,6 @@
 package ru.normal.trans34.presentation.screen.map.component
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -16,9 +15,12 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import ru.normal.trans34.R
 import ru.normal.trans34.presentation.model.StopCardUiModel
 import ru.normal.trans34.presentation.model.UnitPointUiModel
+import ru.normal.trans34.presentation.screen.schedule.component.GenericList
 
 @Composable
 fun UnitBottomSheetContent(
@@ -27,19 +29,18 @@ fun UnitBottomSheetContent(
     isSaved: Boolean = false,
     onSaveUnit: (UnitPointUiModel) -> Unit
 ) {
-    Scaffold (
+    Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        unit.id, overflow = TextOverflow.Ellipsis
+                        stringResource(R.string.route_label, unit.routeNumber),
+                        overflow = TextOverflow.Ellipsis
                     )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
+                }, colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                     titleContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                ),
-                actions = {
+                ), actions = {
                     IconButton(onClick = { onSaveUnit(unit) }) {
                         Icon(
                             imageVector = if (isSaved) Icons.Filled.BookmarkAdded else Icons.Outlined.BookmarkAdd,
@@ -47,26 +48,17 @@ fun UnitBottomSheetContent(
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
-                }
-            )
+                })
         },
     ) { paddingValues ->
-        Column(
+        GenericList(
+            items = timetable,
+            itemContent = { route -> StopCardItem(route) },
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxHeight()
                 .padding(paddingValues)
                 .navigationBarsPadding()
-        ) {
-
-        }
-
-//        RouteList(
-//            routes = timetable,
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .padding(paddingValues)
-//                .navigationBarsPadding()
-//        )
+        )
     }
 }
 
