@@ -169,6 +169,13 @@ class MapViewModel @Inject constructor(
     }
 
     private fun selectStop(stop: StopPointUiModel) {
+
+        _state.update {
+            it.copy(
+                selectedStop = stop,
+                selectedUnit = null,
+            )
+        }
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val arrivals = getStopArrivalsUseCase(stop.id)
@@ -188,9 +195,7 @@ class MapViewModel @Inject constructor(
                 }
                 _state.update {
                     it.copy(
-                        selectedStop = stop,
                         routesByStop = _state.value.routesByStop + (stop.id to list),
-                        selectedUnit = null,
                         error = null
                     )
                 }
@@ -203,7 +208,12 @@ class MapViewModel @Inject constructor(
     }
 
     fun selectUnit(unit: UnitPointUiModel) {
-        Log.d("selectUnit", "unit selected")
+        _state.update {
+            it.copy(
+                selectedUnit = unit,
+                selectedStop = null,
+                )
+        }
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val arrivals = getUnitArrivalsUseCase(unit.id)
@@ -221,9 +231,7 @@ class MapViewModel @Inject constructor(
                 }
                 _state.update {
                     it.copy(
-                        selectedUnit = unit,
                         stopsByUnit = _state.value.stopsByUnit + (unit.id to list),
-                        selectedStop = null,
                         error = null
                     )
                 }
@@ -238,7 +246,10 @@ class MapViewModel @Inject constructor(
     private fun dismissBottomSheet() {
         _state.update {
             it.copy(
-                selectedStop = null, routesByStop = it.routesByStop - (it.selectedStop?.id ?: 0)
+                selectedStop = null,
+                selectedUnit = null,
+                routesByStop = it.routesByStop - (it.selectedStop?.id ?: 0),
+                stopsByUnit = it.stopsByUnit - (it.selectedUnit?.id ?: "")
             )
         }
     }
