@@ -40,7 +40,7 @@ fun <T> GenericList(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = stringResource(R.string.no_available_routes),
+                text = stringResource(R.string.no_data),
                 style = MaterialTheme.typography.titleMedium.copy(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Medium,
