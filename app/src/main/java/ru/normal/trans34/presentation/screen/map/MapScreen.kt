@@ -42,7 +42,7 @@ import ru.normal.trans34.R
 import ru.normal.trans34.presentation.model.StopPointUiModel
 import ru.normal.trans34.presentation.model.UnitPointUiModel
 import ru.normal.trans34.presentation.screen.map.component.MapContent
-import ru.normal.trans34.presentation.screen.map.component.StopScheduleBottomSheetContent
+import ru.normal.trans34.presentation.screen.map.component.StopBottomSheetContent
 import ru.normal.trans34.presentation.screen.map.component.UnitBottomSheetContent
 import ru.normal.trans34.presentation.screen.map.utils.animatePlacemarkMove
 import ru.normal.trans34.presentation.screen.map.utils.bitmapFromVector
@@ -312,7 +312,7 @@ fun MapScreen() {
             modifier = Modifier.fillMaxHeight(),
         ) {
             state.selectedStop?.let { selectedStop ->
-                StopScheduleBottomSheetContent(
+                StopBottomSheetContent(
                     stop = selectedStop,
                     timetable = state.routesByStop[selectedStop.id] ?: emptyList(),
                     isSaved = savedStops[selectedStop.id] ?: false,

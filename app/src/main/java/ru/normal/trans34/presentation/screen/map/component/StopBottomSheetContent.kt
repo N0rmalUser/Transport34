@@ -21,7 +21,7 @@ import ru.normal.trans34.presentation.model.StopPointUiModel
 import ru.normal.trans34.presentation.screen.schedule.component.RouteList
 
 @Composable
-fun StopScheduleBottomSheetContent(
+fun StopBottomSheetContent(
     stop: StopPointUiModel,
     timetable: List<UnitCardUiModel>,
     isSaved: Boolean = false,
