@@ -19,6 +19,7 @@
     <string name="loading_message">Loading...</string>
     <string name="no_stops_saved">No saved stops</string>
     <string name="stop_label">Stop %1$s</string>
+    <string name="route_label">Route № %1$s</string>
 
 
     <string name="route_arrival_time">Arrival: %1$s</string>
@@ -26,6 +27,7 @@
     <string name="route_arriving">Arriving</string>
 
     <string name="no_available_routes">No available routes</string>
+    <string name="no_data">No data</string>
     <string name="cancel">Cancel</string>
     <string name="delete_stop">Delete</string>
     <string name="confirm_delete_title">Delete a stop?</string>
