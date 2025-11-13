@@ -20,6 +20,7 @@ import ru.normal.trans34.domain.entity.MapBorders
 import ru.normal.trans34.domain.entity.SavedStop
 import ru.normal.trans34.domain.entity.StopPoint
 import ru.normal.trans34.domain.entity.UnitPoint
+import ru.normal.trans34.domain.repository.SettingsRepository
 import ru.normal.trans34.domain.usecase.AddSavedStopUseCase
 import ru.normal.trans34.domain.usecase.CheckIsStopSavedUseCase
 import ru.normal.trans34.domain.usecase.GetStopArrivalsUseCase
@@ -30,12 +31,11 @@ import ru.normal.trans34.domain.usecase.RemoveStopUseCase
 import ru.normal.trans34.presentation.computeMinutesUntil
 import ru.normal.trans34.presentation.mapTransportType
 import ru.normal.trans34.presentation.model.StopCardUiModel
-import ru.normal.trans34.presentation.model.UnitCardUiModel
 import ru.normal.trans34.presentation.model.StopPointUiModel
+import ru.normal.trans34.presentation.model.UnitCardUiModel
 import ru.normal.trans34.presentation.model.UnitPointUiModel
 import javax.inject.Inject
 import kotlin.math.abs
-import ru.normal.trans34.domain.repository.SettingsRepository
 
 @HiltViewModel
 class MapViewModel @Inject constructor(
@@ -68,12 +68,10 @@ class MapViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            settingsRepository.showUnitsFlow()
-                .collect { show ->
+            settingsRepository.showUnitsFlow().collect { show ->
                     _state.update { current ->
                         current.copy(
-                            showUnits = show,
-                            units = if (!show) emptyList() else current.units
+                            showUnits = show, units = if (!show) emptyList() else current.units
                         )
                     }
                     if (show) {
@@ -90,6 +88,7 @@ class MapViewModel @Inject constructor(
                 lastBorders = borders
                 loadData(borders)
             }
+
             is MapIntent.DismissBottomSheet -> dismissBottomSheet()
             is MapIntent.SelectStop -> selectStop(intent.stop)
             is MapIntent.SelectUnit -> selectUnit(intent.unit)
@@ -99,6 +98,7 @@ class MapViewModel @Inject constructor(
                     refreshUnits(borders)
                 }
             }
+
             is MapIntent.ToggleUnitsVisibility -> toggleUnitsVisibility(intent.show)
             is MapIntent.ToggleUnit -> (toggleUnit(intent.unit))
         }
@@ -119,8 +119,7 @@ class MapViewModel @Inject constructor(
     private fun toggleUnitsVisibility(show: Boolean) {
         _state.update {
             it.copy(
-                showUnits = show,
-                units = if (!show) emptyList() else it.units
+                showUnits = show, units = if (!show) emptyList() else it.units
             )
         }
 
@@ -169,7 +168,6 @@ class MapViewModel @Inject constructor(
     }
 
     private fun selectStop(stop: StopPointUiModel) {
-
         _state.update {
             it.copy(
                 selectedStop = stop,
@@ -195,8 +193,7 @@ class MapViewModel @Inject constructor(
                 }
                 _state.update {
                     it.copy(
-                        routesByStop = _state.value.routesByStop + (stop.id to list),
-                        error = null
+                        routesByStop = _state.value.routesByStop + (stop.id to list), error = null
                     )
                 }
             } catch (e: Exception) {
@@ -210,17 +207,15 @@ class MapViewModel @Inject constructor(
     fun selectUnit(unit: UnitPointUiModel) {
         _state.update {
             it.copy(
-                selectedUnit = unit,
-                selectedStop = null,
-                )
+                selectedUnit = unit, selectedStop = null
+            )
         }
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val arrivals = getUnitArrivalsUseCase(unit.id)
                 val list = arrivals.map { unit ->
                     val currentLocale = context.resources.configuration.locales[0].language
-                    val title =
-                        if (currentLocale == "ru") unit.titleRu else unit.titleEn
+                    val title = if (currentLocale == "ru") unit.titleRu else unit.titleEn
 
                     StopCardUiModel(
                         id = unit.id,
@@ -231,8 +226,7 @@ class MapViewModel @Inject constructor(
                 }
                 _state.update {
                     it.copy(
-                        stopsByUnit = _state.value.stopsByUnit + (unit.id to list),
-                        error = null
+                        stopsByUnit = _state.value.stopsByUnit + (unit.id to list), error = null
                     )
                 }
             } catch (e: Exception) {

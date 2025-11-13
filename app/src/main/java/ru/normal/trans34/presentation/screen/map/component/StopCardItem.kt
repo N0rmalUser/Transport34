@@ -28,9 +28,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ru.normal.trans34.R
 import ru.normal.trans34.presentation.model.StopCardUiModel
-import ru.normal.trans34.presentation.model.TransportType
-import ru.normal.trans34.presentation.model.UnitCardUiModel
-import ru.normal.trans34.presentation.screen.schedule.component.RouteCardItem
 
 @Composable
 fun StopCardItem(
