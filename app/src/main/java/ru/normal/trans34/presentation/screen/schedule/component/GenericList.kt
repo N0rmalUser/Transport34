@@ -25,12 +25,13 @@ import ru.normal.trans34.presentation.model.UnitCardUiModel
 
 
 @Composable
-fun RouteList(
-    routes: List<UnitCardUiModel>,
+fun <T> GenericList(
+    items: List<T>,
+    itemContent: @Composable (T) -> Unit,
     modifier: Modifier = Modifier
 ) {
 
-    if (routes.isEmpty()) {
+    if (items.isEmpty()) {
         Box(
             modifier = modifier
                 .fillMaxWidth()
@@ -56,8 +57,8 @@ fun RouteList(
             modifier = modifier,
             contentPadding = PaddingValues(vertical = 2.dp, horizontal = 2.dp)
         ) {
-            items(routes) { route ->
-                RouteCardItem(route)
+            items(items) { item ->
+                itemContent(item)
             }
         }
     }
@@ -68,7 +69,7 @@ fun RouteList(
 fun RouteListPreview(
     modifier: Modifier = Modifier
 ) {
-    RouteList(
+    GenericList(
         listOf(
             UnitCardUiModel(
                 routeId = 0,
@@ -103,6 +104,7 @@ fun RouteListPreview(
                 transportType = TransportType.BUS
             ),
         ),
+        itemContent = { route -> RouteCardItem(route) },
         modifier = modifier
     )
 }

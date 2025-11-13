@@ -40,7 +40,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.normal.trans34.R
-import ru.normal.trans34.presentation.screen.schedule.component.RouteList
+import ru.normal.trans34.presentation.screen.schedule.component.GenericList
+import ru.normal.trans34.presentation.screen.schedule.component.RouteCardItem
 
 @Composable
 fun ScheduleScreen() {
@@ -157,7 +158,11 @@ fun ScheduleScreen() {
                                 }
                             })
                 ) {
-                    RouteList(routesForPage, modifier = Modifier.fillMaxSize())
+                    GenericList(
+                        items = routesForPage,
+                        itemContent = { route -> RouteCardItem(route) },
+                        modifier = Modifier.fillMaxSize()
+                    )
 
                     Box(
                         modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center

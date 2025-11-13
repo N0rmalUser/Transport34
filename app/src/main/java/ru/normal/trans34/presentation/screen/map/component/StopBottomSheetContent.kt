@@ -18,7 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import ru.normal.trans34.presentation.model.UnitCardUiModel
 import ru.normal.trans34.presentation.model.StopPointUiModel
-import ru.normal.trans34.presentation.screen.schedule.component.RouteList
+import ru.normal.trans34.presentation.screen.schedule.component.GenericList
+import ru.normal.trans34.presentation.screen.schedule.component.RouteCardItem
 
 @Composable
 fun StopBottomSheetContent(
@@ -51,8 +52,9 @@ fun StopBottomSheetContent(
             )
         },
     ) { paddingValues ->
-        RouteList(
-            routes = timetable,
+        GenericList(
+            items = timetable,
+            itemContent = { route -> RouteCardItem(route) },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(paddingValues)
