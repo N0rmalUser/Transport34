@@ -1,4 +1,4 @@
-package ru.normal.trans34.data.local.saved
+package ru.normal.trans34.data.local.stops
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

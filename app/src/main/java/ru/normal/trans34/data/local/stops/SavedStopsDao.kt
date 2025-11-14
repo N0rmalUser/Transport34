@@ -1,4 +1,4 @@
-package ru.normal.trans34.data.local.saved
+package ru.normal.trans34.data.local.stops
 
 import androidx.room.Dao
 import androidx.room.Delete
@@ -6,7 +6,6 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
-import ru.normal.trans34.data.local.saved.SavedStopEntity
 
 @Dao
 interface SavedStopsDao {

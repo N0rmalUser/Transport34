@@ -7,7 +7,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.ktor.client.HttpClient
-import ru.normal.trans34.data.local.saved.SavedStopsDao
+import ru.normal.trans34.data.local.stops.SavedStopsDao
 import ru.normal.trans34.data.remote.TransportApi
 import ru.normal.trans34.data.repository.SettingsRepositoryImpl
 import ru.normal.trans34.data.repository.StopsRepositoryImpl

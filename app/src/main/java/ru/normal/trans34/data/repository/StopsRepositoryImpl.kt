@@ -4,8 +4,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import ru.normal.trans34.data.local.saved.SavedStopEntity
-import ru.normal.trans34.data.local.saved.SavedStopsDao
+import ru.normal.trans34.data.local.stops.SavedStopEntity
+import ru.normal.trans34.data.local.stops.SavedStopsDao
 import ru.normal.trans34.domain.entity.SavedStop
 import ru.normal.trans34.domain.repository.StopsRepository
 import kotlin.Int

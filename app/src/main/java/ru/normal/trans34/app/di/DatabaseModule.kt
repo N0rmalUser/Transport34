@@ -8,7 +8,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import ru.normal.trans34.data.local.AppDatabase
-import ru.normal.trans34.data.local.saved.SavedStopsDao
+import ru.normal.trans34.data.local.stops.SavedStopsDao
 import javax.inject.Singleton
 
 @Module
