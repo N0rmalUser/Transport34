@@ -8,13 +8,16 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.ktor.client.HttpClient
 import ru.normal.trans34.data.local.stops.SavedStopsDao
+import ru.normal.trans34.data.local.routes.SavedRoutesDao
 import ru.normal.trans34.data.remote.TransportApi
 import ru.normal.trans34.data.repository.SettingsRepositoryImpl
 import ru.normal.trans34.data.repository.StopsRepositoryImpl
 import ru.normal.trans34.data.repository.TransportRepositoryImpl
+import ru.normal.trans34.data.repository.RoutesRepositoryImpl
 import ru.normal.trans34.domain.repository.SettingsRepository
 import ru.normal.trans34.domain.repository.StopsRepository
 import ru.normal.trans34.domain.repository.TransportRepository
+import ru.normal.trans34.domain.repository.RoutesRepository
 import javax.inject.Singleton
 
 @Module
@@ -37,6 +40,16 @@ object RepositoryModule {
     ): StopsRepository {
         return StopsRepositoryImpl(
             savedStopsDao = savedStopsDao
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideRoutesRepository(
+        savedRoutesDao: SavedRoutesDao
+    ): RoutesRepository {
+        return RoutesRepositoryImpl(
+            savedRoutesDao = savedRoutesDao
         )
     }
 

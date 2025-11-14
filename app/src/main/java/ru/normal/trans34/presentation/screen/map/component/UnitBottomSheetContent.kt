@@ -27,7 +27,7 @@ fun UnitBottomSheetContent(
     unit: UnitPointUiModel,
     timetable: List<StopCardUiModel>,
     isSaved: Boolean = false,
-    onSaveUnit: (UnitPointUiModel) -> Unit
+    onSaveRoute: (UnitPointUiModel) -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -41,10 +41,10 @@ fun UnitBottomSheetContent(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                     titleContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 ), actions = {
-                    IconButton(onClick = { onSaveUnit(unit) }) {
+                    IconButton(onClick = { onSaveRoute(unit) }) {
                         Icon(
                             imageVector = if (isSaved) Icons.Filled.BookmarkAdded else Icons.Outlined.BookmarkAdd,
-                            contentDescription = "Save stop",
+                            contentDescription = "Save route",
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }

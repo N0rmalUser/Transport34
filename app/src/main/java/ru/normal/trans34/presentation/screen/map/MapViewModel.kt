@@ -1,7 +1,6 @@
 package ru.normal.trans34.presentation.screen.map
 
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yandex.mapkit.Animation
@@ -18,9 +17,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.normal.trans34.domain.entity.MapBorders
 import ru.normal.trans34.domain.entity.SavedStop
+import ru.normal.trans34.domain.entity.SavedRoute
 import ru.normal.trans34.domain.entity.StopPoint
 import ru.normal.trans34.domain.entity.UnitPoint
 import ru.normal.trans34.domain.repository.SettingsRepository
+import ru.normal.trans34.domain.repository.RoutesRepository
 import ru.normal.trans34.domain.usecase.AddSavedStopUseCase
 import ru.normal.trans34.domain.usecase.CheckIsStopSavedUseCase
 import ru.normal.trans34.domain.usecase.GetStopArrivalsUseCase
@@ -47,6 +48,7 @@ class MapViewModel @Inject constructor(
     private val addSavedStopUseCase: AddSavedStopUseCase,
     private val checkIsStopSavedUseCase: CheckIsStopSavedUseCase,
     private val settingsRepository: SettingsRepository,
+    private val routesRepository: RoutesRepository,
     @param:ApplicationContext private val context: Context
 ) : ViewModel() {
     private val _state = MutableStateFlow(
@@ -60,8 +62,8 @@ class MapViewModel @Inject constructor(
     private val _savedStops = MutableStateFlow<Map<Int, Boolean>>(emptyMap())
     val savedStops: StateFlow<Map<Int, Boolean>> = _savedStops.asStateFlow()
 
-    private val _savedUnits = MutableStateFlow<Map<String, Boolean>>(emptyMap())
-    val savedUnits: StateFlow<Map<String, Boolean>> = _savedUnits.asStateFlow()
+    private val _savedRoutes = MutableStateFlow<Map<String, Boolean>>(emptyMap())
+    val savedRoutes: StateFlow<Map<String, Boolean>> = _savedRoutes.asStateFlow()
 
 
     private var lastBorders: MapBorders? = null
@@ -147,24 +149,20 @@ class MapViewModel @Inject constructor(
         }
     }
 
-
     private fun toggleUnit(unit: UnitPointUiModel) {
-        Log.d("toggleUnit", "toggle unit save")
-//        viewModelScope.launch(Dispatchers.IO) {
-//            val isSaved = savedUnits.value[unit.id] ?: false
-//            if (isSaved) {
-//                removeStopUseCase(unit.id)
-//            } else {
-//                addSavedStopUseCase(
-//                    SavedUnit(
-//                        id = unit.id,
-//                        tabId = 0,
-//                        destinationRu = unit.destination,
-//                        destinationEn = unit.destination
-//                    )
-//                )
-//            }
-//        }
+        viewModelScope.launch(Dispatchers.IO) {
+            val isSaved = savedRoutes.value[unit.routeNumber] ?: false
+            if (isSaved) {
+                routesRepository.removeRoute(unit.routeNumber)
+            } else {
+                routesRepository.saveRoute(
+                    SavedRoute(
+                        id = unit.routeNumber,
+                        title = unit.destination
+                    )
+                )
+            }
+        }
     }
 
     private fun selectStop(stop: StopPointUiModel) {
@@ -268,11 +266,18 @@ class MapViewModel @Inject constructor(
                         speed = unit.speed,
                         systemTime = unit.systemTime,
                         transportType = mapTransportType(unit.transportType),
-                    )
+                    ).also { unitUi ->
+                        viewModelScope.launch(Dispatchers.IO) {
+                            routesRepository.isRouteSaved(unitUi.routeNumber).collect { isSaved ->
+                                _savedRoutes.update { currentMap ->
+                                    currentMap + (unitUi.routeNumber to isSaved)
+                                }
+                            }
+
+                        }
+                    }
                 }
-
                 _state.update { it.copy(units = list, error = null) }
-
             } catch (e: Exception) {
                 _state.update { it.copy(error = e.message ?: "UnitPoint Loading error") }
             }
@@ -300,6 +305,7 @@ class MapViewModel @Inject constructor(
                                     currentMap + (stop.id to isSaved)
                                 }
                             }
+
                         }
                     }
                 }

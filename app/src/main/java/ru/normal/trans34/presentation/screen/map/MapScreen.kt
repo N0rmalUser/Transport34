@@ -321,6 +321,7 @@ fun MapScreen() {
         }
     }
 
+    val savedRoutes by viewModel.savedRoutes.collectAsState()
     if (state.selectedUnit != null) {
         ModalBottomSheet(
             sheetState = sheetState,
@@ -328,12 +329,12 @@ fun MapScreen() {
             modifier = Modifier.fillMaxHeight(),
         ) {
             state.selectedUnit?.let { selectedUnit ->
+                Log.e("savedRoutes", savedRoutes.toString())
                 UnitBottomSheetContent(
                     unit = selectedUnit,
                     timetable = state.stopsByUnit[selectedUnit.id] ?: emptyList(),
-                    // TODO: Сделать сохранение маршрутов по id маршрута
-//                    isSaved = savedRoutes[selectedUnit.id] ?: false,
-                    onSaveUnit = { unit -> viewModel.handleIntent(MapIntent.ToggleUnit(unit)) })
+                    isSaved = savedRoutes[selectedUnit.routeNumber] ?: false,
+                    onSaveRoute = { unit -> viewModel.handleIntent(MapIntent.ToggleUnit(unit)) })
             }
         }
     }
