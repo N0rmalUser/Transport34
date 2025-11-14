@@ -8,6 +8,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import ru.normal.trans34.data.local.AppDatabase
+import ru.normal.trans34.data.local.MIGRATION_1_2
+import ru.normal.trans34.data.local.routes.SavedRoutesDao
 import ru.normal.trans34.data.local.stops.SavedStopsDao
 import javax.inject.Singleton
 
@@ -17,9 +19,13 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
-        Room.databaseBuilder(context, AppDatabase::class.java, "app_db").build()
+    fun provideDatabase(@ApplicationContext context: Context): AppDatabase = Room.databaseBuilder(
+        context, AppDatabase::class.java, "app_db"
+    ).addMigrations(MIGRATION_1_2).build()
 
     @Provides
     fun provideStopsDao(db: AppDatabase): SavedStopsDao = db.savedStopsDao()
+
+    @Provides
+    fun provideRoutesDao(db: AppDatabase): SavedRoutesDao = db.savedRoutesDao()
 }
