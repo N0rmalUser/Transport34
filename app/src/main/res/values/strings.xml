@@ -37,5 +37,7 @@
     <string name="update_available">Update is available</string>
     <string name="download_update">Download update</string>
     <string name="new_version">"New version: %1$s"</string>
-    <string name="transport">Transport</string>
+    <string name="all_transport">Transport</string>
+    <string name="my_transport">My transport</string>
+    <string name="nothing">Nothing</string>
 </resources>

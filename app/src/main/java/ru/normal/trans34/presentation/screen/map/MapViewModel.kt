@@ -13,15 +13,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.normal.trans34.domain.entity.MapBorders
-import ru.normal.trans34.domain.entity.SavedStop
 import ru.normal.trans34.domain.entity.SavedRoute
+import ru.normal.trans34.domain.entity.SavedStop
 import ru.normal.trans34.domain.entity.StopPoint
 import ru.normal.trans34.domain.entity.UnitPoint
-import ru.normal.trans34.domain.repository.SettingsRepository
 import ru.normal.trans34.domain.repository.RoutesRepository
+import ru.normal.trans34.domain.repository.SettingsRepository
 import ru.normal.trans34.domain.usecase.AddSavedStopUseCase
 import ru.normal.trans34.domain.usecase.CheckIsStopSavedUseCase
 import ru.normal.trans34.domain.usecase.GetStopArrivalsUseCase
@@ -71,15 +72,15 @@ class MapViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             settingsRepository.showUnitsFlow().collect { show ->
-                    _state.update { current ->
-                        current.copy(
-                            showUnits = show, units = if (!show) emptyList() else current.units
-                        )
-                    }
-                    if (show) {
-                        lastBorders?.let { refreshUnits(it) }
-                    }
+                _state.update { current ->
+                    current.copy(
+                        showUnits = show, units = if (!show) emptyList() else current.units
+                    )
                 }
+                if (show) {
+                    lastBorders?.let { refreshUnits(it) }
+                }
+            }
         }
     }
 
@@ -101,8 +102,8 @@ class MapViewModel @Inject constructor(
                 }
             }
 
-            is MapIntent.ToggleUnitsVisibility -> toggleUnitsVisibility(intent.show)
             is MapIntent.ToggleUnit -> (toggleUnit(intent.unit))
+            is MapIntent.SetVisibility -> setVisibility(intent.showSavedRoutes, intent.showUnits)
         }
     }
 
@@ -118,16 +119,18 @@ class MapViewModel @Inject constructor(
         )
     }
 
-    private fun toggleUnitsVisibility(show: Boolean) {
+    private fun setVisibility(showSavedRoutes: Boolean, showUnits: Boolean) {
+        val effectiveShowUnits = showSavedRoutes || showUnits
         _state.update {
             it.copy(
-                showUnits = show, units = if (!show) emptyList() else it.units
+                showSavedRoutes = showSavedRoutes, showUnits = effectiveShowUnits, units = it.units
             )
         }
-
         viewModelScope.launch {
-            settingsRepository.saveShowUnits(show)
-            if (show) lastBorders?.let { refreshUnits(it) }
+            settingsRepository.saveShowUnits(effectiveShowUnits)
+            if (effectiveShowUnits) {
+                lastBorders?.let { refreshUnits(it) }
+            }
         }
     }
 
@@ -154,11 +157,15 @@ class MapViewModel @Inject constructor(
             val isSaved = savedRoutes.value[unit.routeNumber] ?: false
             if (isSaved) {
                 routesRepository.removeRoute(unit.routeNumber)
+                if (state.value.showSavedRoutes) {
+                    viewModelScope.launch {
+                        lastBorders?.let { refreshUnits(it) }
+                    }
+                }
             } else {
                 routesRepository.saveRoute(
                     SavedRoute(
-                        id = unit.routeNumber,
-                        title = unit.destination
+                        id = unit.routeNumber, title = unit.destination
                     )
                 )
             }
@@ -251,8 +258,7 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val unitsList: List<UnitPoint> = getUnitsOnMapUseCase(borders)
-
-                val list = unitsList.map { unit ->
+                val mapped = unitsList.map { unit ->
                     val currentLocale = context.resources.configuration.locales[0].language
                     val destination =
                         if (currentLocale == "ru") unit.destinationRu else unit.destinationEn
@@ -266,18 +272,18 @@ class MapViewModel @Inject constructor(
                         speed = unit.speed,
                         systemTime = unit.systemTime,
                         transportType = mapTransportType(unit.transportType),
-                    ).also { unitUi ->
-                        viewModelScope.launch(Dispatchers.IO) {
-                            routesRepository.isRouteSaved(unitUi.routeNumber).collect { isSaved ->
-                                _savedRoutes.update { currentMap ->
-                                    currentMap + (unitUi.routeNumber to isSaved)
-                                }
-                            }
-
-                        }
-                    }
+                    )
                 }
-                _state.update { it.copy(units = list, error = null) }
+                val filtered = mapped.filter { unitUi ->
+                    val isSaved = routesRepository.isRouteSaved(unitUi.routeNumber).first()
+                    _savedRoutes.update { currentMap ->
+                        currentMap + (unitUi.routeNumber to isSaved)
+                    }
+                    if (state.value.showSavedRoutes) {
+                        isSaved
+                    } else true
+                }
+                _state.update { it.copy(units = filtered, error = null) }
             } catch (e: Exception) {
                 _state.update { it.copy(error = e.message ?: "UnitPoint Loading error") }
             }
@@ -305,7 +311,6 @@ class MapViewModel @Inject constructor(
                                     currentMap + (stop.id to isSaved)
                                 }
                             }
-
                         }
                     }
                 }

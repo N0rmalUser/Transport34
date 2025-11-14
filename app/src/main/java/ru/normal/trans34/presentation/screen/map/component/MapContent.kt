@@ -3,7 +3,10 @@ package ru.normal.trans34.presentation.screen.map.component
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,13 +16,17 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.ToggleButton
-import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -37,62 +44,95 @@ import ru.normal.trans34.presentation.screen.map.MapViewModel
 
 @Composable
 fun MapContent(
-    mapView: MapView,
-    userLocationLayerState: MutableState<UserLocationLayer?>
+    mapView: MapView, userLocationLayerState: MutableState<UserLocationLayer?>
 ) {
     val viewModel: MapViewModel = hiltViewModel()
     val state by viewModel.state.collectAsState()
+    var selectedIndex by remember {
+        mutableIntStateOf(
+            when {
+                state.showSavedRoutes -> 1
+                state.showUnits -> 2
+                else -> 0
+            }
+        )
+    }
 
-    Box{
-        AndroidView(factory = { mapView }, modifier = Modifier.matchParentSize())
+    val options = listOf(
+        stringResource(R.string.nothing),
+        stringResource(R.string.my_transport),
+        stringResource(R.string.all_transport)
+    )
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        AndroidView(
+            factory = { mapView }, modifier = Modifier.fillMaxWidth()
+        )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(end = 16.dp, bottom = 32.dp),
-            verticalArrangement = Arrangement.Bottom,
-            horizontalAlignment = Alignment.End
+                .padding(horizontal = 16.dp, vertical = 18.dp),
+            verticalArrangement = Arrangement.Bottom
         ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalAlignment = Alignment.End
-            ) {
-                FilledTonalIconButton(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .zIndex(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = IconButtonDefaults.filledTonalIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.8f)
-                    ),
-                    onClick = {
-                        val layer = userLocationLayerState.value ?: return@FilledTonalIconButton
-                        val target = layer.cameraPosition()?.target ?: return@FilledTonalIconButton
-                        val currentCamera = mapView.mapWindow.map.cameraPosition
-                        val newCamera = CameraPosition(
-                            target, 15.5f, currentCamera.azimuth, currentCamera.tilt
-                        )
-                        mapView.mapWindow.map.move(
-                            newCamera, Animation(Animation.Type.SMOOTH, 0.7f), null
-                        )
-                    },
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Spacer(modifier = Modifier.weight(1f))
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.padding(bottom = 8.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.MyLocation,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        contentDescription = "My location"
-                    )
+                    FilledTonalIconButton(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .zIndex(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = IconButtonDefaults.filledTonalIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.8f)
+                        ),
+                        onClick = {
+                            val layer = userLocationLayerState.value ?: return@FilledTonalIconButton
+                            val target =
+                                layer.cameraPosition()?.target ?: return@FilledTonalIconButton
+                            val currentCamera = mapView.mapWindow.map.cameraPosition
+                            val newCamera = CameraPosition(
+                                target, 15.5f, currentCamera.azimuth, currentCamera.tilt
+                            )
+                            mapView.mapWindow.map.move(
+                                newCamera, Animation(Animation.Type.SMOOTH, 0.7f), null
+                            )
+                        },
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.MyLocation,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            contentDescription = "My location"
+                        )
+                    }
                 }
-                ToggleButton(
-                    checked = state.showUnits,
-                    colors = ToggleButtonDefaults.toggleButtonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.8f),
-                        checkedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
-                    ),
-                    onCheckedChange = { checked ->
-                        viewModel.handleIntent(MapIntent.ToggleUnitsVisibility(checked))
-                    },
-                ) {
-                    Text(stringResource(R.string.transport))
+            }
+
+            SingleChoiceSegmentedButtonRow(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                options.forEachIndexed { index, label ->
+                    SegmentedButton(
+                        shape = SegmentedButtonDefaults.itemShape(
+                        index = index,
+                        count = options.size
+                    ), colors = SegmentedButtonDefaults.colors(
+                        activeContainerColor = MaterialTheme.colorScheme.surfaceContainer.copy(
+                            alpha = 0.8f
+                        ),
+                        inactiveContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                    ), onClick = {
+                        selectedIndex = index
+                        viewModel.handleIntent(
+                            MapIntent.SetVisibility(
+                                showSavedRoutes = index == 1, showUnits = index == 2
+                            )
+                        )
+                    }, selected = index == selectedIndex, label = { Text(label) })
                 }
             }
         }
