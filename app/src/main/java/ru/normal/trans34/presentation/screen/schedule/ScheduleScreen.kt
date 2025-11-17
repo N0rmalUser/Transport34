@@ -74,13 +74,6 @@ fun ScheduleScreen() {
         return
     }
 
-    if (state.error != null && state.stops.isEmpty()) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(state.error ?: stringResource(R.string.error_generic))
-        }
-        return
-    }
-
     if (state.stops.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(
