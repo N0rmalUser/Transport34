@@ -145,15 +145,19 @@ class MapViewModel @Inject constructor(
 
     private fun toggleUnit(unit: UnitPointUiModel) {
         viewModelScope.launch(Dispatchers.IO) {
-            val isSaved = savedRoutes.value[unit.routeNumber] ?: false
-            if (isSaved) {
+            val currentlySaved = savedRoutes.value[unit.routeNumber]
+                ?: routesRepository.isRouteSaved(unit.routeNumber).first()
+            if (currentlySaved) {
                 routesRepository.removeRoute(unit.routeNumber)
+                _savedRoutes.update { it - unit.routeNumber }
             } else {
                 routesRepository.saveRoute(
                     SavedRoute(
-                        id = unit.routeNumber, title = unit.destination
+                        id = unit.routeNumber,
+                        title = unit.destination
                     )
                 )
+                _savedRoutes.update { it + (unit.routeNumber to true) }
             }
             if (state.value.visibilityMode == MapVisibilityMode.SAVED_ROUTES) {
                 lastBorders?.let { refreshUnits(it) }
@@ -271,7 +275,9 @@ class MapViewModel @Inject constructor(
                 }
                 val filtered = mapped.filter { unitUi ->
                     val isSaved = routesRepository.isRouteSaved(unitUi.routeNumber).first()
-                    _savedRoutes.update { it + (unitUi.routeNumber to isSaved) }
+                    if (isSaved) {
+                        _savedRoutes.update { it + (unitUi.routeNumber to true) }
+                    }
                     if (mode == MapVisibilityMode.SAVED_ROUTES) isSaved else true
                 }
                 _state.update { it.copy(units = filtered, error = null) }
