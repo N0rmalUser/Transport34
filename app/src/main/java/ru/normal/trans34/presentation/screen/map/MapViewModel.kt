@@ -20,7 +20,6 @@ import ru.normal.trans34.domain.entity.MapBorders
 import ru.normal.trans34.domain.entity.SavedRoute
 import ru.normal.trans34.domain.entity.SavedStop
 import ru.normal.trans34.domain.entity.StopPoint
-import ru.normal.trans34.domain.entity.UnitPoint
 import ru.normal.trans34.domain.repository.RoutesRepository
 import ru.normal.trans34.domain.repository.SettingsRepository
 import ru.normal.trans34.domain.usecase.AddSavedStopUseCase
@@ -32,6 +31,7 @@ import ru.normal.trans34.domain.usecase.GetUnitsOnMapUseCase
 import ru.normal.trans34.domain.usecase.RemoveStopUseCase
 import ru.normal.trans34.presentation.computeMinutesUntil
 import ru.normal.trans34.presentation.mapTransportType
+import ru.normal.trans34.presentation.model.MapVisibilityMode
 import ru.normal.trans34.presentation.model.StopCardUiModel
 import ru.normal.trans34.presentation.model.StopPointUiModel
 import ru.normal.trans34.presentation.model.UnitCardUiModel
@@ -71,14 +71,12 @@ class MapViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            settingsRepository.showUnitsFlow().collect { show ->
-                _state.update { current ->
-                    current.copy(
-                        showUnits = show, units = if (!show) emptyList() else current.units
-                    )
-                }
-                if (show) {
-                    lastBorders?.let { refreshUnits(it) }
+            settingsRepository.visibilityModeFlow().collect { mode ->
+                _state.update { it.copy(visibilityMode = mode) }
+                when (mode) {
+                    MapVisibilityMode.NOTHING -> _state.update { it.copy(units = emptyList()) }
+                    MapVisibilityMode.SAVED_ROUTES -> lastBorders?.let { refreshUnits(it) }
+                    MapVisibilityMode.ALL_TRANSPORT -> lastBorders?.let { refreshUnits(it) }
                 }
             }
         }
@@ -96,14 +94,9 @@ class MapViewModel @Inject constructor(
             is MapIntent.SelectStop -> selectStop(intent.stop)
             is MapIntent.SelectUnit -> selectUnit(intent.unit)
             is MapIntent.ToggleStop -> toggleStop(intent.stop)
-            is MapIntent.RefreshUnits -> {
-                lastBorders?.let { borders ->
-                    refreshUnits(borders)
-                }
-            }
-
+            is MapIntent.RefreshUnits -> lastBorders?.let { refreshUnits(it) }
             is MapIntent.ToggleUnit -> (toggleUnit(intent.unit))
-            is MapIntent.SetVisibility -> setVisibility(intent.showSavedRoutes, intent.showUnits)
+            is MapIntent.ChangeVisibilityMode -> changeVisibilityMode(intent.mode)
         }
     }
 
@@ -119,20 +112,18 @@ class MapViewModel @Inject constructor(
         )
     }
 
-    private fun setVisibility(showSavedRoutes: Boolean, showUnits: Boolean) {
-        val effectiveShowUnits = showSavedRoutes || showUnits
-        _state.update {
-            it.copy(
-                showSavedRoutes = showSavedRoutes, showUnits = effectiveShowUnits, units = it.units
-            )
-        }
+    private fun changeVisibilityMode(mode: MapVisibilityMode) {
+        _state.update { it.copy(visibilityMode = mode) }
         viewModelScope.launch {
-            settingsRepository.saveShowUnits(effectiveShowUnits)
-            if (effectiveShowUnits) {
-                lastBorders?.let { refreshUnits(it) }
+            settingsRepository.saveVisibilityMode(mode)
+
+            when (mode) {
+                MapVisibilityMode.NOTHING -> _state.update { it.copy(units = emptyList()) }
+                else -> lastBorders?.let { refreshUnits(it) }
             }
         }
     }
+
 
     fun toggleStop(stop: StopPointUiModel) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -157,11 +148,6 @@ class MapViewModel @Inject constructor(
             val isSaved = savedRoutes.value[unit.routeNumber] ?: false
             if (isSaved) {
                 routesRepository.removeRoute(unit.routeNumber)
-                if (state.value.showSavedRoutes) {
-                    viewModelScope.launch {
-                        lastBorders?.let { refreshUnits(it) }
-                    }
-                }
             } else {
                 routesRepository.saveRoute(
                     SavedRoute(
@@ -169,8 +155,12 @@ class MapViewModel @Inject constructor(
                     )
                 )
             }
+            if (state.value.visibilityMode == MapVisibilityMode.SAVED_ROUTES) {
+                lastBorders?.let { refreshUnits(it) }
+            }
         }
     }
+
 
     private fun selectStop(stop: StopPointUiModel) {
         _state.update {
@@ -254,15 +244,20 @@ class MapViewModel @Inject constructor(
     }
 
     fun refreshUnits(borders: MapBorders) {
-        if (!_state.value.showUnits) return
+        val mode = state.value.visibilityMode
+
+        if (mode == MapVisibilityMode.NOTHING) {
+            _state.update { it.copy(units = emptyList()) }
+            return
+        }
+
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val unitsList: List<UnitPoint> = getUnitsOnMapUseCase(borders)
+                val unitsList = getUnitsOnMapUseCase(borders)
                 val mapped = unitsList.map { unit ->
                     val currentLocale = context.resources.configuration.locales[0].language
                     val destination =
                         if (currentLocale == "ru") unit.destinationRu else unit.destinationEn
-
                     UnitPointUiModel(
                         id = unit.id,
                         routeNumber = unit.routeNumber,
@@ -271,17 +266,13 @@ class MapViewModel @Inject constructor(
                         azimuth = unit.azimuth,
                         speed = unit.speed,
                         systemTime = unit.systemTime,
-                        transportType = mapTransportType(unit.transportType),
+                        transportType = mapTransportType(unit.transportType)
                     )
                 }
                 val filtered = mapped.filter { unitUi ->
                     val isSaved = routesRepository.isRouteSaved(unitUi.routeNumber).first()
-                    _savedRoutes.update { currentMap ->
-                        currentMap + (unitUi.routeNumber to isSaved)
-                    }
-                    if (state.value.showSavedRoutes) {
-                        isSaved
-                    } else true
+                    _savedRoutes.update { it + (unitUi.routeNumber to isSaved) }
+                    if (mode == MapVisibilityMode.SAVED_ROUTES) isSaved else true
                 }
                 _state.update { it.copy(units = filtered, error = null) }
             } catch (e: Exception) {
@@ -289,6 +280,7 @@ class MapViewModel @Inject constructor(
             }
         }
     }
+
 
     fun loadData(borders: MapBorders) {
         viewModelScope.launch(Dispatchers.IO) {

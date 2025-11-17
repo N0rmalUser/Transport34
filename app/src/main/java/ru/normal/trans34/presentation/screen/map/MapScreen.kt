@@ -37,6 +37,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.normal.trans34.R
+import ru.normal.trans34.presentation.model.MapVisibilityMode
 import ru.normal.trans34.presentation.model.StopPointUiModel
 import ru.normal.trans34.presentation.model.UnitPointUiModel
 import ru.normal.trans34.presentation.screen.map.component.MapContent
@@ -151,11 +152,16 @@ fun MapScreen() {
         }
     }
 
-    LaunchedEffect(state.units, currentZoom.floatValue, state.showUnits) {
+    LaunchedEffect(state.units, currentZoom.floatValue, state.visibilityMode) {
         if (!mapView.isAttachedToWindow) return@LaunchedEffect
         delay(100)
 
-        if (currentZoom.floatValue < MIN_ZOOM_TO_SHOW || !state.showUnits) {
+        val mode = state.visibilityMode
+        val shouldShowUnits =
+            currentZoom.floatValue >= MIN_ZOOM_TO_SHOW &&
+                    mode != MapVisibilityMode.NOTHING
+
+        if (!shouldShowUnits) {
             unitPlacemarks.values.forEach { it.isVisible = false }
             return@LaunchedEffect
         } else {

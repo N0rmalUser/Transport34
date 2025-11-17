@@ -2,6 +2,7 @@ package ru.normal.trans34.presentation.screen.map
 
 import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.VisibleRegion
+import ru.normal.trans34.presentation.model.MapVisibilityMode
 import ru.normal.trans34.presentation.model.StopPointUiModel
 import ru.normal.trans34.presentation.model.UnitPointUiModel
 
@@ -16,5 +17,5 @@ sealed class MapIntent {
     object RefreshUnits : MapIntent()
     data class ToggleStop(val stop: StopPointUiModel) : MapIntent()
     data class ToggleUnit(val unit: UnitPointUiModel) : MapIntent()
-    data class SetVisibility(val showSavedRoutes: Boolean, val showUnits: Boolean) : MapIntent()
+    data class ChangeVisibilityMode(val mode: MapVisibilityMode) : MapIntent()
 }

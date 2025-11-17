@@ -19,11 +19,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -39,6 +37,7 @@ import com.yandex.mapkit.map.CameraPosition
 import com.yandex.mapkit.mapview.MapView
 import com.yandex.mapkit.user_location.UserLocationLayer
 import ru.normal.trans34.R
+import ru.normal.trans34.presentation.model.MapVisibilityMode
 import ru.normal.trans34.presentation.screen.map.MapIntent
 import ru.normal.trans34.presentation.screen.map.MapViewModel
 
@@ -49,15 +48,6 @@ fun MapContent(
 ) {
     val viewModel: MapViewModel = hiltViewModel()
     val state by viewModel.state.collectAsState()
-    var selectedIndex by remember {
-        mutableIntStateOf(
-            when {
-                state.showSavedRoutes -> 1
-                state.showUnits -> 2
-                else -> 0
-            }
-        )
-    }
 
     val userLocationLayerState = remember { mutableStateOf<UserLocationLayer?>(null) }
     val currentLayer by rememberUpdatedState(userLocationLayerState.value)
@@ -107,10 +97,9 @@ fun MapContent(
     }
 
     val options = listOf(
-        stringResource(R.string.nothing),
-        stringResource(R.string.my_transport),
-        stringResource(R.string.all_transport)
+        MapVisibilityMode.NOTHING, MapVisibilityMode.SAVED_ROUTES, MapVisibilityMode.ALL_TRANSPORT
     )
+    val selectedIndex = options.indexOf(state.visibilityMode)
 
     Box(modifier = Modifier.fillMaxSize()) {
         AndroidView(
@@ -147,26 +136,25 @@ fun MapContent(
                 }
             }
 
-            SingleChoiceSegmentedButtonRow(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                options.forEachIndexed { index, label ->
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                options.forEachIndexed { index, mode ->
                     SegmentedButton(
-                        shape = SegmentedButtonDefaults.itemShape(
-                        index = index, count = options.size
-                    ), colors = SegmentedButtonDefaults.colors(
-                        activeContainerColor = MaterialTheme.colorScheme.surfaceContainer.copy(
-                            alpha = 0.8f
-                        ),
-                        inactiveContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
-                    ), onClick = {
-                        selectedIndex = index
-                        viewModel.handleIntent(
-                            MapIntent.SetVisibility(
-                                showSavedRoutes = index == 1, showUnits = index == 2
+                        selected = selectedIndex == index, onClick = {
+                            viewModel.handleIntent(MapIntent.ChangeVisibilityMode(mode))
+                        }, colors = SegmentedButtonDefaults.colors(
+                            activeContainerColor = MaterialTheme.colorScheme.surfaceContainer.copy(
+                                alpha = 0.8f
+                            ),
+                            inactiveContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                        ), shape = SegmentedButtonDefaults.itemShape(index, options.size), label = {
+                            Text(
+                                when (mode) {
+                                    MapVisibilityMode.NOTHING -> stringResource(R.string.nothing)
+                                    MapVisibilityMode.SAVED_ROUTES -> stringResource(R.string.my_transport)
+                                    MapVisibilityMode.ALL_TRANSPORT -> stringResource(R.string.all_transport)
+                                }
                             )
-                        )
-                    }, selected = index == selectedIndex, label = { Text(label) })
+                        })
                 }
             }
         }

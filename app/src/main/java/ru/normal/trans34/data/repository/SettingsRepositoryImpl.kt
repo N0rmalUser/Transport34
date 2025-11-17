@@ -2,7 +2,6 @@ package ru.normal.trans34.data.repository
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -11,33 +10,37 @@ import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.first
 import ru.normal.trans34.domain.repository.SettingsRepository
+import ru.normal.trans34.presentation.model.MapVisibilityMode
 
 @Singleton
 class SettingsRepositoryImpl @Inject constructor(
     private val dataStore: DataStore<Preferences>
 ) : SettingsRepository {
 
-    private val SHOW_UNITS_KEY = booleanPreferencesKey("show_units")
+    private val VISIBILITY_KEY = stringPreferencesKey("visibility_mode")
 
-    override suspend fun saveShowUnits(show: Boolean) {
+    override suspend fun saveVisibilityMode(mode: MapVisibilityMode) {
         dataStore.edit { prefs ->
-            prefs[SHOW_UNITS_KEY] = show
+            prefs[VISIBILITY_KEY] = mode.name
         }
     }
 
-    override fun showUnitsFlow(): Flow<Boolean> {
+    override fun visibilityModeFlow(): Flow<MapVisibilityMode> {
         return dataStore.data
-            .catch { exception ->
-                if (exception is IOException) emit(emptyPreferences()) else throw exception
+            .catch { e ->
+                if (e is IOException) emit(emptyPreferences()) else throw e
             }
             .map { prefs ->
-                prefs[SHOW_UNITS_KEY] ?: true
+                prefs[VISIBILITY_KEY]?.let {
+                    runCatching { MapVisibilityMode.valueOf(it) }.getOrNull()
+                } ?: MapVisibilityMode.ALL_TRANSPORT
             }
     }
 
-    override suspend fun getShowUnits(): Boolean {
-        return showUnitsFlow().first()
+    override suspend fun getVisibilityMode(): MapVisibilityMode {
+        return visibilityModeFlow().first()
     }
 }

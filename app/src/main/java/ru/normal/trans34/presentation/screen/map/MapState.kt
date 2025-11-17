@@ -2,6 +2,7 @@ package ru.normal.trans34.presentation.screen.map
 
 import com.yandex.mapkit.Animation
 import com.yandex.mapkit.map.CameraPosition
+import ru.normal.trans34.presentation.model.MapVisibilityMode
 import ru.normal.trans34.presentation.model.StopCardUiModel
 import ru.normal.trans34.presentation.model.UnitCardUiModel
 import ru.normal.trans34.presentation.model.StopPointUiModel
@@ -16,7 +17,6 @@ data class MapState(
     val selectedUnit: UnitPointUiModel? = null,
     val routesByStop: Map<Int, List<UnitCardUiModel>> = emptyMap(),
     val stopsByUnit: Map<String, List<StopCardUiModel>> = emptyMap(),
-    val showUnits: Boolean = true,
-    val showSavedRoutes: Boolean = true,
+    val visibilityMode: MapVisibilityMode = MapVisibilityMode.ALL_TRANSPORT,
     val error: String? = null
 )
