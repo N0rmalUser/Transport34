@@ -40,4 +40,10 @@
     <string name="all_transport">Transport</string>
     <string name="my_transport">My transport</string>
     <string name="nothing">Nothing</string>
+
+
+    <string name="location_permission_title">Location permission required</string>
+    <string name="location_permission_message">You have permanently denied this permission. You can enable it in the app settings.</string>
+    <string name="location_permission_open_settings">Open settings</string>
+    <string name="location_permission_cancel">Cancel</string>
 </resources>

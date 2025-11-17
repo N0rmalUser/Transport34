@@ -153,6 +153,7 @@ dependencies {
 
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation(libs.accompanist.permissions)
 
     configurations.all {
         exclude(group = "com.intellij", module = "annotations")

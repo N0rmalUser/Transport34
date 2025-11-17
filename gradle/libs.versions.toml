@@ -17,6 +17,7 @@ navigationCompose = "2.9.6"
 uiTextGoogleFonts = "1.9.4"
 
 accompanistSystemuicontroller = "0.36.0"
+accompanistPermissions = "0.37.3"
 
 ksp = "2.2.20-2.0.4"
 
@@ -82,6 +83,7 @@ androidx-datastore = { group= "androidx.datastore", name = "datastore-preference
 
 # Accompanist
 accompanist-systemuicontroller = { module = "com.google.accompanist:accompanist-systemuicontroller", version.ref = "accompanistSystemuicontroller" }
+accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
 
 # Testing
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

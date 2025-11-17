@@ -36,4 +36,9 @@
     <string name="all_transport">Показать транспорт</string>
     <string name="my_transport">Мой транспорт</string>
     <string name="nothing">Ничего</string>
+
+    <string name="location_permission_title">Необходим доступ к геолокации</string>
+    <string name="location_permission_message">Вы запретили это разрешение навсегда. Его можно включить в настройках приложения.</string>
+    <string name="location_permission_open_settings">Открыть настройки</string>
+    <string name="location_permission_cancel">Отмена</string>
 </resources>

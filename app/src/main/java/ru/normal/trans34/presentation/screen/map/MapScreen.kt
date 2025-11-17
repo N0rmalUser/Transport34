@@ -13,7 +13,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
@@ -33,7 +32,6 @@ import com.yandex.mapkit.map.PlacemarkMapObject
 import com.yandex.mapkit.map.RotationType
 import com.yandex.mapkit.map.TextStyle
 import com.yandex.mapkit.mapview.MapView
-import com.yandex.mapkit.user_location.UserLocationLayer
 import com.yandex.runtime.image.ImageProvider
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -260,38 +258,8 @@ fun MapScreen() {
     }
 
 
-    val userLocationLayerState = remember { mutableStateOf<UserLocationLayer?>(null) }
 
-    DisposableEffect(mapView) {
-        val layer = MapKitFactory.getInstance().createUserLocationLayer(mapView.mapWindow)
-        layer.isVisible = true
-        layer.isHeadingModeActive = true
-
-//        TODO: Сделать иконки для местоположения
-//        layer.setObjectListener(object : UserLocationObjectListener {
-//            val bitmap = bitmapFromVector(context, R.drawable.qwe, 100, Color.Red.toArgb())
-//            val icon = ImageProvider.fromBitmap(bitmap)
-//            override fun onObjectAdded(view: UserLocationView) {
-//                view.pin.setIcon(icon)
-//                view.arrow.setIcon(icon)
-//                view.accuracyCircle.fillColor = 0x3300AEEF
-//            }
-
-//            override fun onObjectRemoved(view: UserLocationView) {}
-//            override fun onObjectUpdated(view: UserLocationView, event: ObjectEvent) {}
-//        }
-//    )
-        userLocationLayerState.value = layer
-        onDispose {
-            layer.isVisible = false
-        }
-    }
-
-
-    MapContent(
-        mapView,
-        userLocationLayerState
-    )
+    MapContent(mapView)
 
 
     val sheetState = rememberModalBottomSheetState()
