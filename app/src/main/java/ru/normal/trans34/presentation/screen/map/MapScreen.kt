@@ -303,7 +303,6 @@ fun MapScreen() {
             modifier = Modifier.fillMaxHeight(),
         ) {
             state.selectedUnit?.let { selectedUnit ->
-                Log.e("savedRoutes", savedRoutes.toString())
                 UnitBottomSheetContent(
                     unit = selectedUnit,
                     timetable = state.stopsByUnit[selectedUnit.id] ?: emptyList(),
