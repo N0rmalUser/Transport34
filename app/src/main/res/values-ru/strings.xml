@@ -33,7 +33,7 @@
     <string name="update_available">Доступно обновление</string>
     <string name="download_update">Скачать обновление</string>
     <string name="new_version">Новая версия: %1$s</string>
-    <string name="all_transport">Показать транспорт</string>
+    <string name="all_transport">Весь транспорт</string>
     <string name="my_transport">Мой транспорт</string>
     <string name="nothing">Ничего</string>
 
