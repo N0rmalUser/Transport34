@@ -6,25 +6,23 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.delay
-import ru.normal.trans34.domain.usecase.GetSavedStopsUseCase
-import ru.normal.trans34.domain.usecase.GetStopArrivalsUseCase
-import ru.normal.trans34.domain.usecase.RemoveStopUseCase
+import ru.normal.trans34.domain.repository.StopsRepository
+import ru.normal.trans34.domain.repository.TransportRepository
 import ru.normal.trans34.presentation.computeMinutesUntil
 import ru.normal.trans34.presentation.mapTransportType
-import ru.normal.trans34.presentation.model.UnitCardUiModel
 import ru.normal.trans34.presentation.model.StopScheduleUiModel
+import ru.normal.trans34.presentation.model.UnitCardUiModel
 import javax.inject.Inject
 
 @HiltViewModel
 class ScheduleViewModel @Inject constructor(
-    private val getStopArrivalsUseCase: GetStopArrivalsUseCase,
-    private val getSavedStopsUseCase: GetSavedStopsUseCase,
-    private val removeStopUseCase: RemoveStopUseCase,
+    private val stopsRepository: StopsRepository,
+    private val transportRepository: TransportRepository,
     @param:ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -34,20 +32,17 @@ class ScheduleViewModel @Inject constructor(
     init {
         viewModelScope.launch(Dispatchers.IO) {
             val currentLocale = context.resources.configuration.locales[0].language
-            getSavedStopsUseCase().collect { savedStops ->
+            stopsRepository.getSavedStops().collect { savedStops ->
                 val list = savedStops.map {
                     val destination =
                         if (currentLocale == "ru") it.destinationRu else it.destinationEn
 
                     StopScheduleUiModel(
-                        id = it.id,
-                        tabId = it.tabId,
-                        destination = destination
+                        id = it.id, tabId = it.tabId, destination = destination
                     )
                 }
                 _state.value = _state.value.copy(
-                    stops = list,
-                    isInitialLoading = false
+                    stops = list, isInitialLoading = false
                 )
                 _state.value.selectedStop.let { loadArrivals(it) }
             }
@@ -73,7 +68,7 @@ class ScheduleViewModel @Inject constructor(
 
     private fun delStop(stopId: Int) {
         viewModelScope.launch(Dispatchers.IO) {
-            removeStopUseCase(stopId)
+            stopsRepository.removeStopById(stopId)
         }
     }
 
@@ -98,7 +93,7 @@ class ScheduleViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             delay(700)
             try {
-                val arrivals = getStopArrivalsUseCase(stopId)
+                val arrivals = transportRepository.getStopArriveList(stopId)
                 val list = arrivals.map { route ->
                     val currentLocale = context.resources.configuration.locales[0].language
                     val destination =

@@ -23,13 +23,8 @@ import ru.normal.trans34.domain.entity.StopPoint
 import ru.normal.trans34.domain.entity.UnitPoint
 import ru.normal.trans34.domain.repository.RoutesRepository
 import ru.normal.trans34.domain.repository.SettingsRepository
-import ru.normal.trans34.domain.usecase.AddSavedStopUseCase
-import ru.normal.trans34.domain.usecase.CheckIsStopSavedUseCase
-import ru.normal.trans34.domain.usecase.GetStopArrivalsUseCase
-import ru.normal.trans34.domain.usecase.GetStopsOnMapUseCase
-import ru.normal.trans34.domain.usecase.GetUnitArrivalsUseCase
-import ru.normal.trans34.domain.usecase.GetUnitsOnMapUseCase
-import ru.normal.trans34.domain.usecase.RemoveStopUseCase
+import ru.normal.trans34.domain.repository.StopsRepository
+import ru.normal.trans34.domain.repository.TransportRepository
 import ru.normal.trans34.presentation.computeMinutesUntil
 import ru.normal.trans34.presentation.mapTransportType
 import ru.normal.trans34.presentation.model.StopCardUiModel
@@ -41,13 +36,8 @@ import kotlin.math.abs
 
 @HiltViewModel
 class MapViewModel @Inject constructor(
-    private val getStopsOnMapUseCase: GetStopsOnMapUseCase,
-    private val getUnitsOnMapUseCase: GetUnitsOnMapUseCase,
-    private val removeStopUseCase: RemoveStopUseCase,
-    private val getStopArrivalsUseCase: GetStopArrivalsUseCase,
-    private val getUnitArrivalsUseCase: GetUnitArrivalsUseCase,
-    private val addSavedStopUseCase: AddSavedStopUseCase,
-    private val checkIsStopSavedUseCase: CheckIsStopSavedUseCase,
+    private val stopsRepository: StopsRepository,
+    private val transportRepository: TransportRepository,
     private val settingsRepository: SettingsRepository,
     private val routesRepository: RoutesRepository,
     @param:ApplicationContext private val context: Context
@@ -138,9 +128,9 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val isSaved = savedStops.value[stop.id] ?: false
             if (isSaved) {
-                removeStopUseCase(stop.id)
+                stopsRepository.removeStopById(stop.id)
             } else {
-                addSavedStopUseCase(
+                stopsRepository.addStop(
                     SavedStop(
                         id = stop.id,
                         tabId = 0,
@@ -181,7 +171,7 @@ class MapViewModel @Inject constructor(
         }
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val arrivals = getStopArrivalsUseCase(stop.id)
+                val arrivals = transportRepository.getStopArriveList(stop.id)
                 val list = arrivals.map { route ->
                     val currentLocale = context.resources.configuration.locales[0].language
                     val destination =
@@ -217,7 +207,7 @@ class MapViewModel @Inject constructor(
         }
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val arrivals = getUnitArrivalsUseCase(unit.id)
+                val arrivals = transportRepository.getUnitArriveList(unit.id)
                 val list = arrivals.map { unit ->
                     val currentLocale = context.resources.configuration.locales[0].language
                     val title = if (currentLocale == "ru") unit.titleRu else unit.titleEn
@@ -257,7 +247,7 @@ class MapViewModel @Inject constructor(
         if (!_state.value.showUnits) return
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val unitsList: List<UnitPoint> = getUnitsOnMapUseCase(borders)
+                val unitsList: List<UnitPoint> = transportRepository.getUnits(borders)
                 val mapped = unitsList.map { unit ->
                     val currentLocale = context.resources.configuration.locales[0].language
                     val destination =
@@ -293,7 +283,7 @@ class MapViewModel @Inject constructor(
     fun loadData(borders: MapBorders) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val stopsList: List<StopPoint> = getStopsOnMapUseCase(borders)
+                val stopsList: List<StopPoint> = transportRepository.getStops(borders)
 
                 val list = stopsList.map { stop ->
                     val currentLocale = context.resources.configuration.locales[0].language
@@ -306,7 +296,7 @@ class MapViewModel @Inject constructor(
                         destination = destination
                     ).also { stopUi ->
                         viewModelScope.launch(Dispatchers.IO) {
-                            checkIsStopSavedUseCase(stop.id).collect { isSaved ->
+                            stopsRepository.isStopSaved(stop.id).collect { isSaved ->
                                 _savedStops.update { currentMap ->
                                     currentMap + (stop.id to isSaved)
                                 }
