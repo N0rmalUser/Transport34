@@ -145,6 +145,7 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
 
     implementation(libs.accompanist.systemuicontroller)
+    implementation(libs.accompanist.permissions)
     implementation(libs.androidx.foundation)
 
     androidTestImplementation(libs.androidx.espresso.core)
@@ -153,7 +154,6 @@ dependencies {
 
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-    implementation(libs.accompanist.permissions)
 
     configurations.all {
         exclude(group = "com.intellij", module = "annotations")
