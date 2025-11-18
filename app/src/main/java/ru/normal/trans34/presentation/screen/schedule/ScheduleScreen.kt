@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.AlertDialog
@@ -104,7 +105,11 @@ fun ScheduleScreen() {
         pageCount = { state.stops.size })
 
 
-    Column(Modifier.fillMaxSize()) {
+    Column(
+        Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+    ) {
         val isScrollable = state.stops.size > 3
 
         if (isScrollable) {
@@ -112,37 +117,27 @@ fun ScheduleScreen() {
                 selectedTabIndex = pagerState.currentPage.coerceIn(
                     0, state.stops.lastIndex.coerceAtLeast(0)
                 ),
-                containerColor = MaterialTheme.colorScheme.surfaceContainer
             ) {
                 state.stops.forEachIndexed { index, stop ->
-                    Tab(
-                        selected = index == pagerState.settledPage,
-                        onClick = {
-                            scope.launch {
-                                pagerState.animateScrollToPage(index)
-                            }
-                        },
-                        text = { Text(stop.destination) }
-                    )
+                    Tab(selected = index == pagerState.settledPage, onClick = {
+                        scope.launch {
+                            pagerState.animateScrollToPage(index)
+                        }
+                    }, text = { Text(stop.destination) })
                 }
             }
         } else {
-            PrimaryTabRow (
+            PrimaryTabRow(
                 selectedTabIndex = pagerState.currentPage.coerceIn(
                     0, state.stops.lastIndex.coerceAtLeast(0)
                 ),
-                containerColor = MaterialTheme.colorScheme.surfaceContainer
             ) {
                 state.stops.forEachIndexed { index, stop ->
-                    Tab(
-                        selected = index == pagerState.settledPage,
-                        onClick = {
-                            scope.launch {
-                                pagerState.animateScrollToPage(index)
-                            }
-                        },
-                        text = { Text(stop.destination) }
-                    )
+                    Tab(selected = index == pagerState.settledPage, onClick = {
+                        scope.launch {
+                            pagerState.animateScrollToPage(index)
+                        }
+                    }, text = { Text(stop.destination) })
                 }
             }
         }
